@@ -130,15 +130,15 @@ def activity_trackCall(source, device_data, datainfo, track_obj):
         device
         )
 
-    # video_data = queue1.get()
+
     
 def numpy_creation(img_arr, device_data, track_obj, skip_dict):
     
     device_id = device_data[0]
     device_urn = device_data[1]
     timestampp = device_data[2]
-    
-    if skip_dict[device_id] % 5 == 0:
+    # print(img_arr)
+    if skip_dict[device_id] % 4 == 0:
         
         datainfo = [known_whitelist_faces, known_blacklist_faces, known_whitelist_id, known_blacklist_id]
         activity_trackCall(img_arr, device_data, datainfo, track_obj)
@@ -215,9 +215,9 @@ def gst_1(dev, track_obj, fr_skip):
     
     try:
         if((encode_type.lower()) == "h264"):
-            pipeline = Gst.parse_launch('rtspsrc name=g_rtspsrc_{device_id} location={location} latency=200 protocols="tcp" user-id={username} user-pw={password} !  rtph264depay name=g_depay_{device_id} ! h264parse name=g_parse_{device_id} ! avdec_h264 name=h_decode_{device_id} ! videoconvert name=h_videoconvert_{device_id} ! videoscale name=h_videoscale_{device_id} ! videorate name=h_videorate_{device_id} ! video/x-raw,format=BGR,framerate=15/1,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} sync=false max-buffers=1 drop=true'.format(location=location, device_id=device_id, username=username, password=password))
+            pipeline = Gst.parse_launch('rtspsrc name=g_rtspsrc_{device_id} location={location} latency=200 protocols="tcp" user-id={username} user-pw={password} !  rtph264depay name=g_depay_{device_id} ! h264parse name=g_parse_{device_id} ! avdec_h264 name=h_decode_{device_id} ! videoconvert name=h_videoconvert_{device_id} ! videoscale name=h_videoscale_{device_id} ! videorate name=h_videorate_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} sync=false max-buffers=1 drop=true'.format(location=location, device_id=device_id, username=username, password=password))
         elif((encode_type.lower()) == "h265"):
-            pipeline = Gst.parse_launch('rtspsrc name=g_rtspsrc_{device_id} location={location} latency=200 protocols="tcp" user-id={username} user-pw={password} !  rtph265depay name=g_depay_{device_id} ! h265parse name=g_parse_{device_id} ! avdec_h265 name=h_decode_{device_id} ! videoconvert name=h_videoconvert_{device_id} ! videoscale name=h_videoscale_{device_id} ! videorate name=h_videorate_{device_id} ! video/x-raw,format=BGR,framerate=15/1,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} sync=false max-buffers=1 drop=true'.format(location=location, device_id=device_id, username=username, password=password))
+            pipeline = Gst.parse_launch('rtspsrc name=g_rtspsrc_{device_id} location={location} latency=200 protocols="tcp" user-id={username} user-pw={password} !  rtph265depay name=g_depay_{device_id} ! h265parse name=g_parse_{device_id} ! avdec_h265 name=h_decode_{device_id} ! videoconvert name=h_videoconvert_{device_id} ! videoscale name=h_videoscale_{device_id} ! videorate name=h_videorate_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} sync=false max-buffers=1 drop=true'.format(location=location, device_id=device_id, username=username, password=password))
         elif((encode_type.lower()) == "mp4"):
             pipeline = Gst.parse_launch('rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" ! decodebin name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videorate name=h_videorate_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,framerate=15/1,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} sync=false max-buffers=1 drop=true'.format(location=location, device_id = device_id))
         if not pipeline:

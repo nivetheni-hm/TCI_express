@@ -3,6 +3,12 @@ import numpy as np
 import os,cv2,torch,random,warnings
 warnings.filterwarnings("ignore",category=UserWarning)
 from pathlib import Path
+import uuid
+from pytz import timezone
+import time
+from datetime import datetime
+import asyncio
+import nats, json
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # yolov5 strongsort root directory
 import sys
@@ -16,7 +22,6 @@ from pytorchvideo.transforms.functional import (
     short_side_scale_with_boxes,
     clip_boxes_to_image,)
 from torchvision.transforms._functional_video import normalize
-from pytorchvideo.data.ava import AvaLabeledVideoFramePaths
 from Detection.utils.plots import Annotator, colors, save_one_box
 
 
@@ -41,6 +46,10 @@ import os, shutil
 
 from multiprocessing import Process
 
+from person_type import find_person_type
+from try_anamoly import anamoly_score_calculator, frame_weighted_avg
+from project_1_update_ import output_func
+
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
@@ -55,7 +64,7 @@ pguser = os.getenv("pguser")
 pgpassword = os.getenv("pgpassword")
 
 
-queue_dict = {}
+isolate_queue = {}
 frame_cnt = 0
 
 def clear_folder(folder):
@@ -118,114 +127,6 @@ def deepsort_update(Tracker,pred,xywh,np_img):
     outputs = Tracker.update(xywh, pred[:,4:5],pred[:,5].tolist(),cv2.cvtColor(np_img,cv2.COLOR_BGR2RGB))
     return outputs
 
-
-# def save_yolopreds_tovideo(yolo_preds,id_to_ava_labels,color_map,output_video,datainfo,device_id,batchId, imgs):
-#     # print("*****")
-#     # print(len(imgs))
-#     # print("*****")
-#     if not os.path.exists("./"+device_id):
-#         os.makedirs("./"+device_id)
-        
-#     out_path = './'+device_id+'out.jpg'
-#     global frame_cnt
-#     video_data = []
-#     frame_data = []
-#     for i, (im, pred) in enumerate(zip(yolo_preds.ims, yolo_preds.pred)):
-#         frame_cnt = frame_cnt + 1
-#         confff  =  yolo_preds.pandas().xyxy[0]['confidence'].tolist()
-#         im=cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
-#         # print(len(imgs))
-#         # print(i)
-#         # print(inputs[i])
-#         im_org= imgs[i]
-#         if pred.shape[0]:
-#             for j, (*box, cls, trackid, vx, vy) in enumerate(pred):
-                
-#                 if int(cls) != 0:
-#                     ava_label = ''
-#                 elif trackid in id_to_ava_labels.keys():
-#                     ava_label = id_to_ava_labels[trackid].split(' ')[0]
-#                 else:
-#                     ava_label = 'Unknow'
-#                 cd = int(trackid)
-#                 detect_obj = yolo_preds.names[int(cls)]
-#                 labells = ava_label
-#                 # print(trackid,ava_label)
-#                 text = '{} {} {}'.format(int(trackid),yolo_preds.names[int(cls)],ava_label) #[int(cls)]
-#                 # crop_img = cv2.imread("/home/nivetheni/combined_pipeline/00.jpg")
-#                 im = cv2.imread('/home/nivetheni/combined_pipeline/test.jpg')
-#                 crop_img = save_one_box([694.0, 726.0, 1000.0, 1078.0], im, save=True)
-#                 # crop_img = cv2.imread("/home/nivetheni/combined_pipeline/00.jpg")
-
-#                 # cropimg_name = "./"+device_id+"/"+batchId+"/"+generate(size = 5)+".jpg"
-#                 # print(cropimg_name)
-#                 # cv2.imwrite(cropimg_name, crop_img)
-                
-#                 # command = 'ipfs --api={ipfs_url} add {file_path} -Q'.format(file_path=cropimg_name,ipfs_url=ipfs_url)
-#                 # output = sp.getoutput(command)
-#                 # cidd = output
-#                 cidd = [crop_img]
-#                 # os.remove(cropimg_name)
-                
-#                 if detect_obj == "Person":
-#                     # cv2.imwrite("face_reg.jpg",im)
-#                     did,track_type = find_person_type(crop_img, datainfo)
-#                     # print("*****************************************")
-#                     # print("*****************************************")
-#                     # print("*****************************************")
-#                     # print(did,track_type)
-#                     # print("*****************************************")
-#                     # print("*****************************************")
-#                     # print("*****************************************")
-
-#                     if len(confff) == len(pred):
-#                         people = {cd: {'type': detect_obj, 'activity': labells,"confidence":yolo_preds.pandas().xyxy[0]["confidence"].tolist()[j],"did":did,"track_type":track_type,"crops":cidd}}
-#                     else:
-#                         people = {cd: {'type': detect_obj, 'activity': labells,"confidence":0,"did":did,"track_type":track_type,"crops":cidd}}
-                
-#                     text = text + " " + did
-#                 else:
-#                     if len(confff) == len(pred):
-#                         people = {cd: {'type': detect_obj, 'activity': labells,"confidence":yolo_preds.pandas().xyxy[0]["confidence"].tolist()[j],"crops":cidd}}
-#                     else:
-#                         people = {cd: {'type': detect_obj, 'activity': labells,"confidence":0,"crops":cidd}}
-                
-                
-#                 frame_data.append(people)
-
-#                 color = color_map[int(cls)]
-#                 # cv2.imwrite("before.jpg",im)
-                
-                
-#                 im = plot_one_box(box,im,color,text)
-                
-#         cv2.imwrite("out.jpg",im)
-
-#         # print("frame_data",frame_data)
-#         frame_info_anamoly = anamoly_score_calculator(frame_data)
-
-#         frame_data.clear()
-#         # print(frame_data)
-#         # print("frame_info_anamoly",frame_info_anamoly)
-#         # anamoly_score_calculator(frame_data)
-#         frame_anamoly_wgt = frame_weighted_avg(frame_info_anamoly)
-#         # print(frame_info_anamoly)
-#         cidd = None
-#         if frame_info_anamoly != []:
-#             # fullframe_name = "./"+device_id+"/"+batchId+"/"+generate(size = 5)+".jpg"
-#             # cv2.imwrite(fullframe_name,im)
-#             # command = 'ipfs --api={ipfs_url} add {file_path} -Q'.format(file_path=fullframe_name,ipfs_url=ipfs_url)
-#             # output = sp.getoutput(command)
-#             cidd = [im]
-#             # os.remove(fullframe_name)
-#         video_data.append({"frame_id":frame_cnt,"frame_anamoly_wgt":frame_anamoly_wgt,"detection_info":frame_info_anamoly,"cid":cidd}) 
-#         output_video.write(im.astype(np.uint8))
-
-    
-    
-    
-#     return video_data
-
 def get_length(filename):
     result = sp.run(["ffprobe", "-v", "error", "-show_entries",
                              "format=duration", "-of",
@@ -233,12 +134,48 @@ def get_length(filename):
         stdout=sp.PIPE,
         stderr=sp.STDOUT)
     return float(result.stdout)
-
-# def each_cam_process():
     
+async def json_publish_activity(primary):    
+    nc = await nats.connect(servers=nats_urls , reconnect_time_wait= 50 ,allow_reconnect=True, connect_timeout=20, max_reconnect_attempts=60)
+    js = nc.jetstream()
+    JSONEncoder = json.dumps(primary)
+    json_encoded = JSONEncoder.encode()
+    Subject = "service.activities"
+    Stream_name = "services"
+    ack = await js.publish(Subject, json_encoded)
+    print(" ")
+    print(f'Ack: stream={ack.stream}, sequence={ack.seq}')
+    print("Activity is getting published")
+
+async def process_publish(device_id,batch_data):
+    # print(device_id," ",batch_data)
+    
+    
+    for i,each in enumerate(batch_data):
+        # print("frame_id:",i+1)
+        each["frame_id"] = i+1
+    # print(batch_data)
+
+    output_json = output_func(batch_data)
+    # print(output_json)
+    batchId = str(uuid.uuid4())
+    output_json["batchid"] = batchId
+    output_json["deviceid"] = device_id
+    output_json["timestamp"] = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
+    # geo = "testing_geo"
+    # output_json["geo"] = geo
+    franaavg = sum(output_json["metaData"]["frameAnomalyScore"])/len(output_json["metaData"]["frameAnomalyScore"])
+    output_json["metaData"]["frameAnomalyScore"] = franaavg
+    tenant_id = "test_tenant_id"
+    output_json["tenant_id"] = tenant_id
+    output_json["metaData"]['detect'] = len(output_json["metaData"]['object'])
+    output_json["metaData"]['count'] = len(output_json["metaData"]['object'])
+    output_json["version"] = "v0.0.3"
+    print(output_json)
+    await json_publish_activity(primary=output_json)
 
 def trackmain(
-    inputs,
+    input,
     device_id ,
     batchId,
     queue1,
@@ -264,26 +201,10 @@ def trackmain(
     
     color_map = [[random.randint(0, 255) for _ in range(3)] for _ in range(80)]
 
-    imgs = inputs
-    yolo_preds=model(imgs, size=imsize)
-    
+    img = input
+    yolo_preds=model(img, size=imsize)
+
     frame_cnt += frame_cnt
-    
-    
-    # if device_id not in queue_dict:
-    #     queue_dict[device_id] = []
-    #     queue_dict[device_id].append(yolo_preds)
-    # else:
-    #     queue_dict[device_id].append(yolo_preds)
-    
-    # if len(queue_dict)>0:
-    #     for each in queue_dict:
-    #         if len(queue_dict[each])>0: 
-    #             Process(target=each_cam_process,args=queue_dict[each]) 
-    
-    
-    # print("DEVICE ID: ", device_id)
-    # print("LENGTH YOLO: ",len(yolo_preds))
 
     deepsort_outputs=[]
 
@@ -295,40 +216,142 @@ def trackmain(
         deepsort_outputs.append(temp.astype(np.float32))
     
     yolo_preds.pred=deepsort_outputs
-    
-    video_data = []
-    frame_data = []
-    for i, (im, pred) in enumerate(zip(yolo_preds.ims, yolo_preds.pred)):
-        
-        
-        confff  =  yolo_preds.pandas().xyxy[0]['confidence'].tolist()
-        im=cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
-        im_org= imgs[i]
-        if pred.shape[0]:
-            for j, (*box, cls, trackid, vx, vy) in enumerate(pred):
-                
-                print("DEVICE ID: ", device_id)
-                # print("CLASS: ", cls)
-                # print("BOX: ", *box)
-                print("TRACK ID: ", trackid)
-                
-                cd = int(trackid)
-                detect_obj = yolo_preds.names[int(cls)]
-                # print("DETECTION: ", detect_obj)
-                
-                text = '{} {}'.format(int(trackid),yolo_preds.names[int(cls)]) #[int(cls)]
-                crop_img = save_one_box([*box], inputs, save=False)
 
-                color = color_map[int(cls)]
+    batch_data_processed = []
+    frame_data = []
+    im, pred = (yolo_preds.ims[0], yolo_preds.pred[0])
+    confff  =  yolo_preds.pandas().xyxy[0]['confidence'].tolist()
+    # print(device_id)
+    if pred.shape[0]:
+        for i,detection in enumerate(pred):
+            *box, cls, trackid, vx, vy = detection
+            # print(*box, cls, trackid, vx, vy)
+            labells = yolo_preds.names[int(cls)]
+            # print(labells)
+            text = '{} {}'.format(int(trackid),yolo_preds.names[int(cls)]) #[int(cls)]
+            crop_img = save_one_box([*box], im, save=False)
+            did = ""
+            track_type = "100"
+            # print(len(confff),len(pred))
+            cd = int(trackid)
+            cidd = [crop_img]
+            if len(confff) == len(pred[0]):
+                people = {cd: {'type': "Person", 'activity': labells,"confidence":yolo_preds.pandas().xyxy[0]["confidence"].tolist()[j],"did":did,"track_type":track_type,"crops":cidd}}
+            else:
+                people = {cd: {'type': "Person", 'activity': labells,"confidence":0,"did":did,"track_type":track_type,"crops":cidd}}
+            text = text + " " + did
+            frame_data.append(people)
+            color = color_map[int(cls)]
+            im = plot_one_box(box,im,color,text)
+    # print(frame_data)
+
+    if len(frame_data) != 0:
+        frame_info_anamoly = anamoly_score_calculator(frame_data)
+        # print(frame_info_anamoly)
+        frame_data.clear()
+        frame_anamoly_wgt = frame_weighted_avg(frame_info_anamoly)
+        # print(frame_anamoly_wgt)
+        cidd = None
+        if frame_info_anamoly != []:
+            cidd = [im]
+        final_frame = {"frame_id":frame_cnt,"frame_anamoly_wgt":frame_anamoly_wgt,"detection_info":frame_info_anamoly,"cid":cidd}
+        # print(final_frame)
+
+        if device_id in isolate_queue:
+            # print("entering if ")
+            isolate_queue[device_id].append(final_frame)
+        else:
+            # print("entering else")
+            isolate_queue[device_id] = []
+            isolate_queue[device_id].append(final_frame)
+        
+        # print([{each:len(isolate_queue[each])} for each in isolate_queue])
+        for each in isolate_queue:
+            
+            if len(isolate_queue[each])>29:
+                print("batch length of ",device_id,":",len(isolate_queue[each]))
+                batch_data = isolate_queue[each]
+                isolate_queue[each] = []
+                asyncio.run(process_publish(device_id,batch_data))
+
+
+        # for i, (im, pred) in enumerate(zip(yolo_preds.ims, yolo_preds.pred)):
+        #     confff  =  yolo_preds.pandas().xyxy[0]['confidence'].tolist()
+        #     im=cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
+        #     im_org= img
+        #     if pred.shape[0]:
+        #         for j, (*box, cls, trackid, vx, vy) in enumerate(pred):
+                    
+        #             print("DEVICE ID: ", device_id)
+        #             # print("CLASS: ", cls)
+        #             # print("BOX: ", *box)
+        #             print("TRACK ID: ", trackid)
+                    
+        #             cd = int(trackid)
+        #             detect_obj = yolo_preds.names[int(cls)]
+        #             labells = detect_obj
+        #             # print("DETECTION: ", detect_obj)
+                    
+        #             text = '{} {}'.format(int(trackid),yolo_preds.names[int(cls)]) #[int(cls)]
+        #             crop_img = save_one_box([*box], im, save=False)
+        #             cidd = [crop_img]
+        #                             # os.remove(cropimg_name)
+                    
+        #             # if detect_obj == "Person":
+        #             did,track_type = find_person_type(crop_img, datainfo)
+
+        #             if len(confff) == len(pred):
+        #                 people = {cd: {'type': "Person", 'activity': labells,"confidence":yolo_preds.pandas().xyxy[0]["confidence"].tolist()[j],"did":did,"track_type":track_type,"crops":cidd}}
+        #             else:
+        #                 people = {cd: {'type': "Person", 'activity': labells,"confidence":0,"did":did,"track_type":track_type,"crops":cidd}}
                 
-                im = plot_one_box(box,inputs,color,text)
-                
-                if os.path.exists(device_id) is False:
-                    os.mkdir(device_id)
+        #             text = text + " " + did
+
+        #             frame_data.append(people)
+        #             color = color_map[int(cls)]
+                    
+        #             im = plot_one_box(box,im,color,text)
+                    
+        #         # if os.path.exists(device_id) is False:
+        #         #     os.mkdir(device_id)
                         
-                detect_img = "./"+device_id+"/"+str(frame_cnt)+".jpg"
-                # print(detect_img)
-                cv2.imwrite(detect_img, im)
+        #         # detect_img = "./"+device_id+"/"+str(frame_cnt)+".jpg"
+        #         # print(detect_img)
+        #         # cv2.imwrite(detect_img, im)
                 
-                print("Image saved")
+        #         # print("Image saved")
+        #     # print(frame_data)
+        #     frame_info_anamoly = anamoly_score_calculator(frame_data)
+        #     # print(frame_info_anamoly)
+        #     frame_data.clear()
+        #     frame_anamoly_wgt = frame_weighted_avg(frame_info_anamoly)
+        #     # print(frame_anamoly_wgt)
+        #     cidd = None
+        #     if frame_info_anamoly != []:
+        #         cidd = [im]
+
+        # if device_id in isolate_queue:
+        #     print("entering if ")
+        #     isolate_queue[device_id].append({"frame_id":frame_cnt,"frame_anamoly_wgt":frame_anamoly_wgt,"detection_info":frame_info_anamoly,"cid":cidd})
+        # else:
+        #     print("entering else")
+        #     isolate_queue[device_id] = []
+        #     isolate_queue[device_id].append({"frame_id":frame_cnt,"frame_anamoly_wgt":frame_anamoly_wgt,"detection_info":frame_info_anamoly,"cid":cidd})
+        
+        # print([len(isolate_queue[each]) for each in isolate_queue])
+
+        # for each in isolate_queue:
+            
+        #     if len(isolate_queue[each])>29:
+        #         print("batch length of ",device_id,":",len(isolate_queue[each]))
+        #         batch_data = isolate_queue[each]
+        #         isolate_queue[each] = []
+
+        #         # for every in batch_data:
+        #         #     yolo_preds = every
                 
+        #         print(len(batch_data))
+        #         print("________________________________________________________________")
+        #         print("________________________________________________________________")
+        #         print("________________________________________________________________")
+        #         print("________________________________________________________________")
