@@ -9,12 +9,15 @@ import gc
 import os, shutil
 import subprocess as sp
 
+# datetime
+from pytz import timezone
+import time
+from datetime import datetime
+
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 ipfs_url = os.getenv("ipfs")
-
-
 
 global id
 def most_frequent_func(lst):
@@ -42,32 +45,32 @@ def conv_path2cid(pathh):
     return output
 
 def padding_img(path, frame):
-    # Set target size
-    width, height = 640, 360
+    # # Set target size
+    # width, height = 640, 360
 
-    # Load image
-    img = frame
-    # Get current size
-    h, w, _ = img.shape
+    # # Load image
+    # img = frame
+    # # Get current size
+    # h, w, _ = img.shape
 
-    # Calculate padding
-    top = bottom = (height - h) // 2
-    left = right = (width - w) // 2
-    top, left,right,bottom = abs(top), abs(left),abs(right),abs(bottom)
+    # # Calculate padding
+    # top = bottom = (height - h) // 2
+    # left = right = (width - w) // 2
+    # top, left,right,bottom = abs(top), abs(left),abs(right),abs(bottom)
 
-    # Add black padding
-    color = [0, 0, 0] # Black
-    img_padded = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT,value=color)
+    # # Add black padding
+    # color = [0, 0, 0] # Black
+    # img_padded = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT,value=color)
 
-    # Resize image
-    img_resized = cv2.resize(img_padded, (width, height))
+    # # Resize image
+    # img_resized = cv2.resize(img_padded, (width, height))
 
     # Save image
-    cv2.imwrite(path, img_resized)
+    cv2.imwrite(path, frame)
     
 
 def output_func(my_list):
-    
+    my_list = [my_list]
     frames=[]               # this variable will hold the frame_id of all the frames in which a atleast one detection was made"
     ids_to_be_monitored=[]  #re-id of all the person type detection with anamoly score>50
     frame_anamoly_wgt = []
@@ -82,7 +85,7 @@ def output_func(my_list):
     did = []
     did_dict = {}
     did_info = []
-   
+    most_occurred_activities = {}
     people_count_list =[]
     vehicle_count_list = []
     object_count_list = []
@@ -123,9 +126,6 @@ def output_func(my_list):
             else:
                 cidss_dic["frame_cids"].append(each["cid"])
 
-    # print("******************")
-    # print(cidss_dic)            
-    # print("*****************")
     final_cid = {}
     for each in cidss_dic:
         if len(cidss_dic[each]) <= 2:
@@ -135,15 +135,13 @@ def output_func(my_list):
         elif len(cidss_dic[each]) > 2:
             idxx = round(len(cidss_dic[each])/2)
             final_cid[each] = cidss_dic[each][idxx]
-    # print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-    # #{1: 'QmagJYuUsQBZyjSQknH2czvQYKNXuX2UKzRDAm31cBkzoY', 2: 'QmNnfodd895WbSd4aaYgruSLrUn1m4ohHRLJ2go6aJBnpL', 3: 'QmTd3HariQNF6z3SnZaKgVgogs1pgFHW6UieDT3aGYqvoD', 'frame_cids': 'QmUL8Lp8gEQxrwbt5EFUX1QgJnYDhxGic48bZrXhsV4b7F'}
-    # # finding middle cid 
-    # print(final_cid)
-    # print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+
 
 
     for item in my_list:
+
        for x in item:
+   
         frame_anamoly_wgt.append(x['frame_anamoly_wgt'])
         frame_id = x['frame_id']
         detection_info = x['detection_info']
@@ -162,32 +160,23 @@ def output_func(my_list):
                    did_dict[key].append(did)                             
                 else:
                    did_dict[key] = [did]
-                # did  = []
-                # did.append(value.get('did'))
-                # did_dict[key] = did
+   
                 if value['type'] == 'Person':
+                    
                     person += 1
                     person_counts[frame_id] = person
-                    # if cid not in person_ids:
-                    #     person_ids.append(cid)
-                    # frame_cid[key]=person_ids
-                    
+        
                     
                     person_counts[frame_id] = person
                 elif value['type'] == 'Vehicle':
                        vehicle +=1
                        vehicle_counts[frame_id] = vehicle
-                    #    if cid not in vehicle_ids:
-                    #        vehicle_ids.append(cid)
-                    #frame_cid[key]=vehicle_ids
+                  
                        
                 elif value['type'] == 'Elephant':
                        object +=1
                        object_counts[frame_id] = object 
-                    #    if cid not in object_ids:
-                    #        object_ids.append(cid)
-                    #    frame_cid[key]=object_ids  
-
+                 
 
 
 
@@ -201,7 +190,7 @@ def output_func(my_list):
 
 
     vehicle_count = sum(vehicle_counts.values())  # this variable will hold the count of total vehicles detected overall
-    person_count = sum(person_counts.values())  # this variable will hold the count of total person detected overall
+    person_count = sum(person_counts.values())  # this variable will hold the count of total person detected overall    
     animal_count = sum(object_counts.values())  # this variable will hold the count of total elephants detected overall
     total_count = vehicle_count + person_count + animal_count
     
@@ -214,40 +203,18 @@ def output_func(my_list):
     
 
 
-    # if frame_count != 0 and total_count > frame_count:
-    #     detection_count = math.ceil(total_count / frame_count)
-    # else :
-    #     detection_count = 0
-    if frame_count_vehicle != 0 and vehicle_count > frame_count_vehicle:
+    if frame_count_vehicle != 0 and vehicle_count >= frame_count_vehicle:
         avg_Batchcount_vehicle = math.ceil(vehicle_count / frame_count_vehicle)
     else :
         avg_Batchcount_vehicle = 0
-    if frame_count_animal != 0 and animal_count > frame_count_animal:
+    if frame_count_animal != 0 and animal_count >= frame_count_animal:
         avg_Batchcount_animal = math.ceil(animal_count / frame_count_animal)
     else :
         avg_Batchcount_animal = 0
-    if frame_count_person !=0 and person_count > frame_count_person:
-        avg_Batchcount_person = math.ceil(person_count / frame_count_person)
+    if frame_count_person !=0 and person_count >= frame_count_person:
+       avg_Batchcount_person = math.ceil(person_count / frame_count_person)
     else :
         avg_Batchcount_person = 0
-
-    total_add = avg_Batchcount_person + avg_Batchcount_animal +  avg_Batchcount_vehicle
-
-    for k,v in did_dict.items():
-                new= {}
-                if all(val == '' or val == None for val in v):
-                    new['id'] = k
-                    new['track'] = '100'
-                    new['old_id'] = k
-                    did_info.append(new)
-                else:
-                    id  = most_frequent_func(v)
-                    new['id'] = id
-                    
-                    track_ = str(id[0:2])
-                    new['track'] = track_
-                    new['old_id'] = k
-                    did_info.append(new)
 
     for x in my_list:
         for item in x:
@@ -257,15 +224,16 @@ def output_func(my_list):
                     detection_score = float(values.get('anamoly_score') or 0)
                     activity_score =  float(values.get('activity_score') or 0)
                     did  =  values.get('did')
-                    act_type = values.get('type')  
+                    track = values.get('track_type')
+                    detect_type = values.get('type')  
                     re_id = key 
                      
                     crop = values.get('crops') 
-                    if act_type == 'Person' and re_id not in people_count_list:
+                    if detect_type == 'Person' and re_id not in people_count_list:
                         people_count_list.append(re_id)
-                    if act_type == 'Vehicle' and re_id not in vehicle_count_list:
+                    if detect_type == 'Vehicle' and re_id not in vehicle_count_list:
                         vehicle_count_list.append(re_id)
-                    if act_type == 'Elephant' and re_id not in object_count_list:
+                    if detect_type == 'Elephant' and re_id not in object_count_list:
                         object_count_list.append(re_id)
                     # if re_id in crops:
                     #     if crop not in crops[re_id]:
@@ -299,9 +267,7 @@ def output_func(my_list):
                         det_score_dict[re_id] = [detection_score]
 
                     if re_id in did_dict :
-                        did_dict[re_id].append(did)
-                        # if did not in  did_dict[re_id]:
-                             
+                        did_dict[re_id].append(did)    
                     else:
                          did_dict[re_id] = [did]
 
@@ -312,28 +278,32 @@ def output_func(my_list):
                     else:
                         activity_dict[re_id] = [activity]
 
-                   
+                    for id, activities in activity_dict.items():
+                            most_occurred_activity = max(set(activities), key=activities.count)
+                            most_occurred_activities[id] = most_occurred_activity
                     
-                    act =   activity_dict[re_id]
+                    act  =   activity_dict[re_id]
                 
                     det_score = det_score_dict[re_id]
+
+                 
+                    if did == " " or "" or None:
+                        memDID = " "
+                    else:
+                        memDID = did
+
                   
-                    if act == [""]:
-                        act = []
-                    for y in did_info:
-                        if re_id == y['old_id']:
-                            id = y['id']
-                            track  = y['track']
 
 
                     temp = {
-                                "type": act_type,
+                                "class": detect_type,
                                 "detectionScore": det_score,
                                 "activityScore": activity_score,
                                 "track": track,
-                                "id": str(id),
+                                "id": str(re_id),
+                                "memDID" : memDID,
                                 "activity": act,
-                                "detectTime": '',
+                                "detectTime" : "",
                                 "cids": c_id
                             } 
                     temp_list.append(temp)            
@@ -343,6 +313,7 @@ def output_func(my_list):
             metaObj.append(obj)
     for items in metaObj:
         items['detectionScore']=sum(items['detectionScore'])/len(items['detectionScore'])
+        items["detectTime"] = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
            
     
     
@@ -350,7 +321,7 @@ def output_func(my_list):
         count_p = len(people_count_list)
     else :
         count_p = avg_Batchcount_person
-    
+
     if len(vehicle_count_list) == 1:
         count_v = len(vehicle_count_list)
     else :
@@ -380,13 +351,7 @@ def output_func(my_list):
         "object": metaObj
        
     }
-    # print("$$$$$$$$$$$$$")
-    # print(metaObj)
-    # print("$$$$$$$$$$$$$")
-    # h=len(metaObj)
-    # # print(h)
-    # print(metaObj[h-1]['detection_info']) 
-    #     # metaObj=metaObj[h-1]
+   
     primary = {
         "type": "activity",
         "deviceid": "",
@@ -398,30 +363,28 @@ def output_func(my_list):
         },
         "metaData": metaBatch
     }
-    #primary["metaData"]["object"].append(test_data)
-    #primary["metaData"]["object"].append(test_data1)
-    # print(primary)
+  
 
-    object_updated = [each for each in primary["metaData"]["object"] if each["id"] in lastframe_re_ids or "did" in each["id"]]
+    # object_updated = [each for each in primary["metaData"]["object"] if each["id"] in lastframe_re_ids or "did" in each["id"]]
 
 
-    # find counts of vehicle person and elephant
-    vehicle_cnt = 0
-    ppl_cnt = 0
-    ele_cnt = 0
-    for each in object_updated:
-        if each["type"] == "Vehicle":
-            vehicle_cnt = vehicle_cnt + 1
-        if each["type"] == "Person":
-            ppl_cnt = ppl_cnt + 1
-        if each["type"] == "Elephant":
-            ele_cnt = ele_cnt + 1 
-    primary["metaData"]["count"]["peopleCount"] = ppl_cnt
-    primary["metaData"]["count"]["vehicleCount"] = vehicle_cnt
-    primary["metaData"]["count"]["ObjectCount"] = ele_cnt
-    primary["metaData"]["object"] = object_updated
-    total_count_1  =len(primary["metaData"]["object"])
-    primary["metaData"]["detect"] = total_count_1
+    # # find counts of vehicle person and elephant
+    # vehicle_cnt = 0
+    # ppl_cnt = 0
+    # ele_cnt = 0
+    # for each in object_updated:
+    #     if each["type"] == "Vehicle":
+    #         vehicle_cnt = vehicle_cnt + 1
+    #     if each["type"] == "Person":
+    #         ppl_cnt = ppl_cnt + 1
+    #     if each["type"] == "Elephant":
+    #         ele_cnt = ele_cnt + 1 
+    # primary["metaData"]["count"]["peopleCount"] = ppl_cnt
+    # primary["metaData"]["count"]["vehicleCount"] = vehicle_cnt
+    # primary["metaData"]["count"]["ObjectCount"] = ele_cnt
+    # primary["metaData"]["object"] = object_updated
+    # total_count_1  =len(primary["metaData"]["object"])
+    # primary["metaData"]["detect"] = total_count_1
 
     if primary["metaData"]['cid']:
         # convert full frame numpy to cid
@@ -433,17 +396,4 @@ def output_func(my_list):
             pathh = "./"+primary['deviceid']+"/cid_ref.jpg"
             padding_img(pathh,each["cids"][0])
             each["cids"] = conv_path2cid(pathh)
-
-        
-
-    #primary[]
-
-
-# h=len(metaObj)
-
     return primary
-
-
-
-
-# print(output_func(my_list))
