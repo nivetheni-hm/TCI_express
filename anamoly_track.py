@@ -242,17 +242,16 @@ def trackmain(
     device_id ,
     batchId,
     queue1,
-    datainfo,
     obj_model,
     track_obj,
-    # video_model,
-    device,
+    device = 'cuda',
     conf = 0.5,
     classes = None,
-    output = './output_model_.mp4',
     imsize = 640,
     iou = 0.4
 ):
+    
+    print("Starting the detection and tracking")
 
     global frame_cnt
 
@@ -267,68 +266,71 @@ def trackmain(
     imgs = inputs
     yolo_preds=model(imgs, size=imsize)
     
-    frame_cnt += frame_cnt
-    
-    
-    # if device_id not in queue_dict:
-    #     queue_dict[device_id] = []
-    #     queue_dict[device_id].append(yolo_preds)
-    # else:
-    #     queue_dict[device_id].append(yolo_preds)
-    
-    # if len(queue_dict)>0:
-    #     for each in queue_dict:
-    #         if len(queue_dict[each])>0: 
-    #             Process(target=each_cam_process,args=queue_dict[each]) 
-    
-    
-    # print("DEVICE ID: ", device_id)
-    # print("LENGTH YOLO: ",len(yolo_preds))
+    print(yolo_preds)
+    # cv2.imwrite('output.jpg', imgs)
 
-    deepsort_outputs=[]
-
-    for j in range(len(yolo_preds.pred)):
-        temp=deepsort_update(track_obj,yolo_preds.pred[j].cpu(),yolo_preds.xywh[j][:,0:4].cpu(),yolo_preds.ims[j])
-        if len(temp)==0:
-            temp=np.ones((0,8))
-
-        deepsort_outputs.append(temp.astype(np.float32))
+    # frame_cnt += frame_cnt
     
-    yolo_preds.pred=deepsort_outputs
     
-    video_data = []
-    frame_data = []
-    for i, (im, pred) in enumerate(zip(yolo_preds.ims, yolo_preds.pred)):
+    # # if device_id not in queue_dict:
+    # #     queue_dict[device_id] = []
+    # #     queue_dict[device_id].append(yolo_preds)
+    # # else:
+    # #     queue_dict[device_id].append(yolo_preds)
+    
+    # # if len(queue_dict)>0:
+    # #     for each in queue_dict:
+    # #         if len(queue_dict[each])>0: 
+    # #             Process(target=each_cam_process,args=queue_dict[each]) 
+    
+    
+    # # print("DEVICE ID: ", device_id)
+    # # print("LENGTH YOLO: ",len(yolo_preds))
+
+    # deepsort_outputs=[]
+
+    # for j in range(len(yolo_preds.pred)):
+    #     temp=deepsort_update(track_obj,yolo_preds.pred[j].cpu(),yolo_preds.xywh[j][:,0:4].cpu(),yolo_preds.ims[j])
+    #     if len(temp)==0:
+    #         temp=np.ones((0,8))
+
+    #     deepsort_outputs.append(temp.astype(np.float32))
+    
+    # yolo_preds.pred=deepsort_outputs
+    
+    # video_data = []
+    # frame_data = []
+    # for i, (im, pred) in enumerate(zip(yolo_preds.ims, yolo_preds.pred)):
         
         
-        confff  =  yolo_preds.pandas().xyxy[0]['confidence'].tolist()
-        im=cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
-        im_org= imgs[i]
-        if pred.shape[0]:
-            for j, (*box, cls, trackid, vx, vy) in enumerate(pred):
+    #     confff  =  yolo_preds.pandas().xyxy[0]['confidence'].tolist()
+    #     im=cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
+    #     im_org= imgs[i]
+    #     if pred.shape[0]:
+    #         for j, (*box, cls, trackid, vx, vy) in enumerate(pred):
                 
-                print("DEVICE ID: ", device_id)
-                # print("CLASS: ", cls)
-                # print("BOX: ", *box)
-                print("TRACK ID: ", trackid)
+    #             print("DEVICE ID: ", device_id)
+    #             # print("CLASS: ", cls)
+    #             # print("BOX: ", *box)
+    #             print("TRACK ID: ", trackid)
                 
-                cd = int(trackid)
-                detect_obj = yolo_preds.names[int(cls)]
-                # print("DETECTION: ", detect_obj)
+    #             cd = int(trackid)
+    #             detect_obj = yolo_preds.names[int(cls)]
+    #             print("DETECTION: ", detect_obj)
                 
-                text = '{} {}'.format(int(trackid),yolo_preds.names[int(cls)]) #[int(cls)]
-                crop_img = save_one_box([*box], inputs, save=False)
+    #             # text = '{} {}'.format(int(trackid),yolo_preds.names[int(cls)]) #[int(cls)]
+    #             # crop_img = save_one_box([*box], inputs, save=False)
 
-                color = color_map[int(cls)]
+    #             # color = color_map[int(cls)]
                 
-                im = plot_one_box(box,inputs,color,text)
+    #             # im = plot_one_box(box,inputs,color,text)
                 
-                if os.path.exists(device_id) is False:
-                    os.mkdir(device_id)
+    #             # if os.path.exists(device_id) is False:
+    #             #     os.mkdir(device_id)
                         
-                detect_img = "./"+device_id+"/"+str(frame_cnt)+".jpg"
-                # print(detect_img)
-                cv2.imwrite(detect_img, im)
+    #             # detect_img = "./"+device_id+"/"+str(frame_cnt)+".jpg"
+    #             # # print(detect_img)
+    #             # cv2.imwrite(detect_img, im)
                 
-                print("Image saved")
+    #             # print("Image saved")
                 

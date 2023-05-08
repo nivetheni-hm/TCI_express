@@ -1,0 +1,11 @@
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-MEDIA-SEQUENCE:28
+#EXT-X-TARGETDURATION:12
+
+#EXTINF:11.949776649475098,
+https://localhost/live/streamc0101b52-c86b-4465-b31e-560305bb1f30/segment.27.ts
+#EXTINF:11.99989128112793,
+https://localhost/live/streamc0101b52-c86b-4465-b31e-560305bb1f30/segment.28.ts
+#EXTINF:10.000272750854492,
+https://localhost/live/streamc0101b52-c86b-4465-b31e-560305bb1f30/segment.29.ts
