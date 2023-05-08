@@ -1,0 +1,6 @@
+YOLOv5 🚀 2023-5-5 Python-3.8.16 torch-1.8.1+cu102 CUDA:0 (Quadro RTX 8000, 48593MiB)
+
+Fusing layers... 
+Model summary: 157 layers, 1768636 parameters, 0 gradients, 4.2 GFLOPs
+Adding AutoShape... 
+Loading weights from ./yolo_slowfast/deep_sort/deep_sort/deep/checkpoint/ckpt.t7... Done!
