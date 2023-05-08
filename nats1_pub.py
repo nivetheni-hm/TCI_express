@@ -8,22 +8,22 @@ import time
 # activity_out = {'type': 'activity', 'deviceid': '40a33680-e95a-11ed-9138-29fd70751e73', 'batchid': '7fdba220-b1b7-4da2-b35a-e7cc74e7dab4', 'timestamp': '2023-05-02 16:21:14.384387', 'geo': {'latitude': 12.918747, 'longitude': 77.431558}, 'metaData': {'detect': 2, 'frameAnomalyScore': [0, 0, 25.12, 25.79, 26.95, 27.329999999999995, 26.660000000000004, 25.51, 24.04, 0, 0, 0, 24.29, 30.160000000000004, 29.339999999999996, 27.625, 28.7, 27.610000000000003, 28.1, 31.5, 30.76, 29.464999999999996, 27.329999999999995, 26.419999999999998, 27.43, 29.080000000000002, 32.75, 33.25, 29.920000000000005, 28.080000000000002], 'count': {'peopleCount': 2, 'vehicleCount': 0, 'ObjectCount': 0}, 'anamolyIds': [], 'cid': 'QmXbCZHPHeuYhwv4JWrGXzkCTLfa4H6aSqykfK52pvLnqu', 'object': [{'class': 'Person', 'detectionScore': 29.899411764705885, 'activityScore': 10.0, 'track': '100', 'id': '4.0', 'activity': ['walking'], 'detectTime': '', 'cids': 'Qmd6EZKo743ciyAg3dndmCUp3a7HxCBVDJvM9cHwF69cvk'}, {'class': 'Person', 'detectionScore': 27.54181818181818, 'activityScore': 10.0, 'track': '100', 'id': '5.0', 'activity': ['walking', 'carrying'], 'detectTime': '', 'cids': 'QmSxBtCBcpLvfeqWfSTR9ydR6TDZCRVRZLNAGdeG75D4J7'}]}, 'memory': '4.663916015625 GB', 'version': 'v0.0.3', 'tenantid': 'a7c4c832-249b-4a81-93da-21f56708f484'}
 
 
-async def main():
+async def main(i):
     # It is very likely that the demo server will see traffic from clients other than yours.
     # To avoid this, start your own locally and modify the example to use it.
     nc = await nats.connect("nats://216.48.181.154:5222")
     
     # js = nc.jetstream()
     device_data = {
-        "username": "happymonk",
-        "password": "admin123",
+        "username": "test",
+        "password": "test123456789",
         # "ip": "streams.ckdr.co.in",
         "port": "5554",
         "ddns": "streams.ckdr.co.in",
-        "rtsp": "rtsp://happymonk:admin123@streams.ckdr.co.in:6554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif",
-        "videoEncodingInformation": "H265",
+        "rtsp": "rtsp://216.48.184.201:8554//stream1",
+        "videoEncodingInformation": "MP4",
         # "deviceId": "40a33680-e95a-11ed-9138-29fd70751e73",
-        "deviceId": "0",
+        "deviceId": str(i),
         "urn": "uuid:3266ee49-9fc4-d257-0e8d-17a0469a7np9",
         "subscriptions" : ["activity"],
         "lat": "26.008032",
@@ -40,7 +40,7 @@ async def main():
     # Subject = "service.member_update"
     Subject = "service.device_discovery"
     ack = await nc.request(Subject, json_encoded)
-    # time.sleep(5)
+    time.sleep(5)
     print("Device is getting published")
         
 
@@ -48,4 +48,5 @@ async def main():
     await nc.drain()
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    for i in range(1,6):
+        asyncio.run(main(i))
