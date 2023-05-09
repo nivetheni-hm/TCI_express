@@ -49,6 +49,7 @@ from multiprocessing import Process
 from person_type import find_person_type
 from try_anamoly import anamoly_score_calculator, frame_weighted_avg
 from project_1_update_ import output_func
+from db_test import dbpush_activities
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -140,14 +141,14 @@ async def json_publish_activity(primary):
     js = nc.jetstream()
     JSONEncoder = json.dumps(primary)
     json_encoded = JSONEncoder.encode()
-    Subject = "service.activities"
+    Subject = "service.notifications"
     Stream_name = "services"
     ack = await js.publish(Subject, json_encoded)
     print(" ")
     print(f'Ack: stream={ack.stream}, sequence={ack.seq}')
     print("Activity is getting published")
 
-async def process_publish(device_id,batch_data):
+async def process_publish(device_id,batch_data,device_data):
     # print(device_id," ",batch_data)
     
     
@@ -160,15 +161,16 @@ async def process_publish(device_id,batch_data):
     
     # print(output_json)
     batchId = str(uuid.uuid4())
+    output_json["tenant_id"] = device_data['tenantId']
     output_json["batchid"] = batchId
     output_json["deviceid"] = device_id
     output_json["timestamp"] = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
+    output_json['geo']['latitude'] = device_data['lat']
+    output_json['geo']['longitude'] = device_data['long']
     # geo = "testing_geo"
     # output_json["geo"] = geo
     franaavg = sum(output_json["metaData"]["frameAnomalyScore"])/len(output_json["metaData"]["frameAnomalyScore"])
     output_json["metaData"]["frameAnomalyScore"] = franaavg
-    tenant_id = "test_tenant_id"
-    output_json["tenant_id"] = tenant_id
     output_json["metaData"]['detect'] = len(output_json["metaData"]['object'])
     output_json["metaData"]['count']["peopleCount"] = len(output_json["metaData"]['object'])
     output_json["version"] = "v0.0.3"
@@ -185,20 +187,21 @@ async def process_publish(device_id,batch_data):
     
 def trackmain(
     input,
+    device_data,
     device_id ,
     batchId,
     queue1,
     datainfo,
     obj_model,
     track_obj,
-    # video_model,
-    device,
+    device = 'cuda',
     conf = 0.5,
     classes = None,
-    output = './output_model_.mp4',
     imsize = 640,
     iou = 0.4
 ):
+    
+    # print("Starting the detection and tracking")
 
     global frame_cnt
 
@@ -277,11 +280,10 @@ def trackmain(
         for each in isolate_queue:
             
             if len(isolate_queue[each])>29:
-                print("batch length of ",device_id,":",len(isolate_queue[each]))
+                # print("batch length of ",device_id,":",len(isolate_queue[each]))
                 batch_data = isolate_queue[each]
                 isolate_queue[each] = []
-                
-                asyncio.run(process_publish(device_id,batch_data))
+                asyncio.run(process_publish(device_id,batch_data,device_data))
 
 
         # for i, (im, pred) in enumerate(zip(yolo_preds.ims, yolo_preds.pred)):
