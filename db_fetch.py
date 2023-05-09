@@ -78,12 +78,12 @@ def fetch_db():
     except (Exception, psycopg2.Error) as error:
         print("Error while fetching data from PostgreSQL", error)
         
-    finally:
-        # closing database connection.
-        if connection:
-            cursor.close()
-            connection.close()
-            print("PostgreSQL connection is closed")
+    # finally:
+    #     # closing database connection.
+    #     if connection:
+    #         cursor.close()
+    #         connection.close()
+    #         print("PostgreSQL connection is closed")
 
 # device_data = fetch_db()
 # print(device_data)

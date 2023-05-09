@@ -1,11 +1,7 @@
 #EXTM3U
 #EXT-X-VERSION:3
-#EXT-X-MEDIA-SEQUENCE:27
-#EXT-X-TARGETDURATION:12
+#EXT-X-MEDIA-SEQUENCE:1
+#EXT-X-TARGETDURATION:11
 
-#EXTINF:12.000611305236816,
-https://localhost/live/stream76b913b4-2754-4f7a-a64a-6c6de163d8e6/segment.26.ts
-#EXTINF:12.000409126281738,
-https://localhost/live/stream76b913b4-2754-4f7a-a64a-6c6de163d8e6/segment.27.ts
-#EXTINF:11.999866485595703,
-https://localhost/live/stream76b913b4-2754-4f7a-a64a-6c6de163d8e6/segment.28.ts
+#EXTINF:11.024318695068359,
+https://localhost/live/stream76b913b4-2754-4f7a-a64a-6c6de163d8e6/segment.0.ts

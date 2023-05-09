@@ -28,6 +28,10 @@ nc_client = NATS() # global Nats declaration
 frame_skip = {}
 pipelines = []
 device_details = []
+known_whitelist_faces = []
+known_whitelist_id = []
+known_blacklist_faces = []
+known_blacklist_id = []
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -42,35 +46,37 @@ if os.path.exists(hls_path) is False:
     
 obj_model = torch.hub.load('Detection', 'custom', path='./best_yolov5.pt', source='local',force_reload=True)
 
-def activity_trackCall(source, device_id, device_timestamp, device_data, track_obj):
-    global only_vehicle_batch_cnt,veh_pub
-    device_urn = device_data['urn']
-    timestampp = device_timestamp
-    lat = device_data['lat']
-    long = device_data['long']
+def activity_trackCall(source, device_id, device_timestamp, device_data, datainfo, track_obj):
+    # global only_vehicle_batch_cnt,veh_pub
+    # device_urn = device_data['urn']
+    # timestampp = device_timestamp
+    # lat = device_data['lat']
+    # long = device_data['long']
     queue1 = Queue()
     batchId = uuid.uuid4()
     
     trackmain(
-        source, 
+        source,
+        device_data,
         device_id, 
         batchId,
         queue1,
+        datainfo,
         obj_model,
         track_obj
         )
 
 def numpy_creation(img_arr, device_id, device_timestamp, device_info, track_obj, skip_dict):
         
-        print("DEVICE ID: ", device_id)
-        print("DEVICE URN: ", device_info['urn'])
-        print("DEVICE TIMESTAMP: ", device_timestamp)
+        # print("DEVICE ID: ", device_id)
+        # print("DEVICE URN: ", device_info['urn'])
+        # print("DEVICE TIMESTAMP: ", device_timestamp)
         
-        print(skip_dict)
+        # print(skip_dict)
         
         if skip_dict[device_id] % 4 == 0:
-            
-            activity_trackCall(img_arr, device_id, device_timestamp, device_info, track_obj)
+            datainfo = [known_whitelist_faces, known_blacklist_faces, known_whitelist_id, known_blacklist_id]
+            activity_trackCall(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj)
 
 class PipelineWatcher:
     def __init__(self, pipelines):
@@ -147,7 +153,7 @@ class PipelineWatcher:
             dtype=np.uint8,
         )
         frameSkip[deviceId] += 1
-        print("DEVICE ID: ", deviceId, "FRAME SKIP: ", frameSkip)
+        # print("DEVICE ID: ", deviceId, "FRAME SKIP: ", frameSkip)
         # print(f"Received frame with shape {nparray.shape}")
         datetime_ist = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
         numpy_creation(img_arr=nparray, device_id=deviceId, device_timestamp=datetime_ist , device_info=deviceInfo, track_obj=trackObj, skip_dict=frameSkip)
@@ -166,10 +172,10 @@ def gst_launcher(device_data, frame_skip):
     # location = device_data['rtsp'] # Fetching device info
     # username = device_data['username']
     # password = device_data['password']
-    location = 'rtsp://streams.ckdr.co.in:1554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif'
+    location = 'rtsp://216.48.184.201:8554//stream1'
     username = 'test'
     password = 'test123456789'
-    encode_type = 'H264'
+    encode_type = 'MP4'
     subscription = device_data['subscriptions']
     # encode_type = device_data['videoEncodingInformation']
     # ddns_name = device_data['ddns']
@@ -182,7 +188,7 @@ def gst_launcher(device_data, frame_skip):
     video_name_hls = hls_path + '/' + str(device_id)
     if not os.path.exists(video_name_hls):
         os.makedirs(video_name_hls, exist_ok=True)
-    print(video_name_hls)
+    # print(video_name_hls)
     
     if(ddns_name == None):
         hostname = 'localhost'
@@ -196,30 +202,31 @@ def gst_launcher(device_data, frame_skip):
     if((encode_type.lower()) == "h265"):
         pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=true ! tee name=g_t_{device_id} ! queue name=g_q_{device_id} ! rtph265depay name=g_depay_{device_id} ! h265parse name=g_parse_{device_id} ! avdec_h265 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=200 g_t_{device_id}. ! queue name=h_q_{device_id} ! rtph265depay name=h_depay_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}'
     if((encode_type.lower()) == "mp4"):
-        pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" latency=50 timeout=300 drop-on-latency=true ! tee name=g_t_{device_id} ! queue name=g_q_{device_id} ! decodebin name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=200 g_t_{device_id}. ! queue name=h_q_{device_id} ! decodebin name=h_decode_{device_id} ! x264enc name=h_enc_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}'
+        pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" ! decodebin name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True sync=false max-buffers=1 drop=true'
     
     pipeline = Gst.parse_launch(pipeline_str)
     
-    # sink params
-    sink = pipeline.get_by_name(f'h_sink_{device_id}')
+    if((encode_type.lower()) == "h265" or (encode_type.lower()) == "h264"):
+        # sink params
+        sink = pipeline.get_by_name(f'h_sink_{device_id}')
 
-    # Location of the playlist to write
-    sink.set_property('playlist-root', f'https://{hostname}/live/stream{device_id}')
-    # Location of the playlist to write
-    sink.set_property('playlist-location', f'{video_name_hls}/{device_id}.m3u8')
-    # Location of the file to write
-    sink.set_property('location', f'{video_name_hls}/segment.%01d.ts')
-    # The target duration in seconds of a segment/file. (0 - disabled, useful for management of segment duration by the streaming server)
-    sink.set_property('target-duration', 10)
-    # Length of HLS playlist. To allow players to conform to section 6.3.3 of the HLS specification, this should be at least 3. If set to 0, the playlist will be infinite.
-    sink.set_property('playlist-length', 3)
-    # Maximum number of files to keep on disk. Once the maximum is reached,old files start to be deleted to make room for new ones.
-    sink.set_property('max-files', 6)
+        # Location of the playlist to write
+        sink.set_property('playlist-root', f'https://{hostname}/live/stream{device_id}')
+        # Location of the playlist to write
+        sink.set_property('playlist-location', f'{video_name_hls}/{device_id}.m3u8')
+        # Location of the file to write
+        sink.set_property('location', f'{video_name_hls}/segment.%01d.ts')
+        # The target duration in seconds of a segment/file. (0 - disabled, useful for management of segment duration by the streaming server)
+        sink.set_property('target-duration', 10)
+        # Length of HLS playlist. To allow players to conform to section 6.3.3 of the HLS specification, this should be at least 3. If set to 0, the playlist will be infinite.
+        sink.set_property('playlist-length', 3)
+        # Maximum number of files to keep on disk. Once the maximum is reached,old files start to be deleted to make room for new ones.
+        sink.set_property('max-files', 6)
     
-    if not sink or not pipeline:
-        print("Not all elements could be created.")
-    else:
-        print("All elements are created and launched sucessfully!")
+        if not sink or not pipeline:
+            print("Not all elements could be created.")
+        else:
+            print("All elements are created and launched sucessfully!")
         
     pipeline.set_state(Gst.State.PLAYING)
     appsink = pipeline.get_by_name(f"g_sink_{device_id}")
@@ -230,7 +237,7 @@ def run_pipeline(devices_for_process):
     
     global frame_skip
     print("LENGTH OF THE DEVICES IN A PROCESS: ", len(devices_for_process))
-    print(devices_for_process)
+    # print(devices_for_process)
 
     for device_tuple in devices_for_process:
         device_dict = {
@@ -256,7 +263,7 @@ def run_pipeline(devices_for_process):
 def call_gstreamer(device_details): # iterate through the device list and start the gstreamer pipeline
     print("Got device info from DB")
     # Calculate the number of devices per process
-    devices_per_process = 2
+    devices_per_process = 5
     num_processes = (len(device_details) - 1) // devices_per_process + 1
     # Start multiple processes and distribute the devices across them
     for i in range(num_processes):
@@ -272,8 +279,8 @@ def call_gstreamer(device_details): # iterate through the device list and start 
 async def main():
     global device_details
     # fetch device details
-    # device_details = fetch_db()
-    device_details = [('76b913b4-2754-4f7a-a64a-6c6de163d8e6', 'a7c4c832-249b-4a81-93da-21f56708f484', 'uuid:626d6410-d723-4dc8-o867-e943c0987dcb', None, '0.0.0.1', 1234.0, 'H264', 'test', 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif', 'admin123', 'Activities', 26.25, 88.11), ('aaa0ec24-999f-4426-b9c8-cd2becb08c65', 'a7c4c832-249b-4a81-93da-21f56708f484', 'uuid:626d6410-d723-4dc8-o867-e943c0987dcb', None, '0.0.0.1', 1234.0, 'H264', 'happymonk', 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif', 'admin123', 'OutDoor', 26.25, 88.11), ('c0101b52-c86b-4465-b31e-560305bb1f30', 'a7c4c832-249b-4a81-93da-21f56708f484', 'uuid:626d6410-d723-4dc8-o867-e943c0987dcb', None, '0.0.0.1', 1234.0, 'H264', 'happymonk', 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=6&subtype=0&unicast=true&proto=Onvif', 'admin123', 'Anomalies', 26.25, 88.11), ('c0101b52-c86b-4465-b31e-560305bb1f30', 'a7c4c832-249b-4a81-93da-21f56708f484', 'uuid:626d6410-d723-4dc8-o867-e943c0987dcb', None, '0.0.0.1', 1234.0, 'H264', 'happymonk', 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=6&subtype=0&unicast=true&proto=Onvif', 'admin123', 'OutDoor', 26.25, 88.11), ('de7a3898-bd42-423f-ab38-d608ef1075ac', 'a7c4c832-249b-4a81-93da-21f56708f484', 'uuid:626d6410-d723-4dc8-o867-e943c0987dcb', None, '0.0.0.1', 1234.0, 'H264', 'happymonk', 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif', 'admin123', 'Activities', 26.25, 88.11)]
+    device_details = fetch_db()
+    # device_details = [('76b913b4-2754-4f7a-a64a-6c6de163d8e6', 'a7c4c832-249b-4a81-93da-21f56708f484', 'uuid:626d6410-d723-4dc8-o867-e943c0987dcb', None, '0.0.0.1', 1234.0, 'H264', 'test', 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif', 'admin123', 'Activities', 26.25, 88.11), ('aaa0ec24-999f-4426-b9c8-cd2becb08c65', 'a7c4c832-249b-4a81-93da-21f56708f484', 'uuid:626d6410-d723-4dc8-o867-e943c0987dcb', None, '0.0.0.1', 1234.0, 'H264', 'happymonk', 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif', 'admin123', 'OutDoor', 26.25, 88.11), ('c0101b52-c86b-4465-b31e-560305bb1f30', 'a7c4c832-249b-4a81-93da-21f56708f484', 'uuid:626d6410-d723-4dc8-o867-e943c0987dcb', None, '0.0.0.1', 1234.0, 'H264', 'happymonk', 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=6&subtype=0&unicast=true&proto=Onvif', 'admin123', 'Anomalies', 26.25, 88.11), ('c0101b52-c86b-4465-b31e-560305bb1f30', 'a7c4c832-249b-4a81-93da-21f56708f484', 'uuid:626d6410-d723-4dc8-o867-e943c0987dcb', None, '0.0.0.1', 1234.0, 'H264', 'happymonk', 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=6&subtype=0&unicast=true&proto=Onvif', 'admin123', 'OutDoor', 26.25, 88.11), ('de7a3898-bd42-423f-ab38-d608ef1075ac', 'a7c4c832-249b-4a81-93da-21f56708f484', 'uuid:626d6410-d723-4dc8-o867-e943c0987dcb', None, '0.0.0.1', 1234.0, 'H264', 'happymonk', 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif', 'admin123', 'Activities', 26.25, 88.11)]
     call_gstreamer(device_details)
 
 if __name__ == '__main__':
