@@ -41,14 +41,22 @@ def fetch_db():
         #     inner join "Geo" ge on  ge."deviceMetaDataId" = metadev.id
         #     ;'''
         
-        query = '''SELECT dev.id, dev."tenantId", metadev.urn, metadev.ddns, metadev.ip, metadev.port, metadev."videoEncodingInformation", dev."remoteUsername", metadev.rtsp, dev."remoteDeviceSalt", feat."name", ge.latitude, ge.longitude
+        # '''SELECT dev.id, dev."tenantId", metadev.urn, metadev.ddns, metadev.ip, metadev.port, metadev."videoEncodingInformation", dev."remoteUsername", metadev.rtsp, dev."remoteDeviceSalt", feat."name", ge.latitude, ge.longitude
+        #         FROM "Device" dev
+        #         INNER JOIN "DeviceMetaData" metadev ON dev."deviceId" = metadev."deviceId"
+        #         INNER JOIN "DeviceFeatures" devfeat ON dev."deviceId" = devfeat."deviceId" AND devfeat.enabled = True
+        #         INNER JOIN "Features" feat ON devfeat."featureId" = feat.id
+        #         INNER JOIN "Geo" ge ON ge."deviceMetaDataId" = metadev.id;
+        #     ;'''
+
+        query =  '''SELECT dev.id, dev."tenantId", metadev.urn, metadev.ddns, metadev.ip, metadev.port, metadev."videoEncodingInformation", dev."remoteUsername", metadev.rtsp, dev."remoteDeviceSalt", ARRAY_AGG(feat."name") AS feature_names, ge.latitude, ge.longitude
                 FROM "Device" dev
                 INNER JOIN "DeviceMetaData" metadev ON dev."deviceId" = metadev."deviceId"
                 INNER JOIN "DeviceFeatures" devfeat ON dev."deviceId" = devfeat."deviceId" AND devfeat.enabled = True
                 INNER JOIN "Features" feat ON devfeat."featureId" = feat.id
-                INNER JOIN "Geo" ge ON ge."deviceMetaDataId" = metadev.id;
+                INNER JOIN "Geo" ge ON ge."deviceMetaDataId" = metadev.id
+                GROUP BY dev.id, dev."tenantId", metadev.urn, metadev.ddns, metadev.ip, metadev.port, metadev."videoEncodingInformation", dev."remoteUsername", metadev.rtsp, dev."remoteDeviceSalt", ge.latitude, ge.longitude;
             ;'''
-
             
         cursor.execute(query)
         
@@ -85,5 +93,5 @@ def fetch_db():
     #         connection.close()
     #         print("PostgreSQL connection is closed")
 
-# device_data = fetch_db()
-# print(device_data)
+device_data = fetch_db()
+print(device_data)
