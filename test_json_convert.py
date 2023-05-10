@@ -17,12 +17,12 @@ from datetime import datetime
 
 img = cv2.imread("/home/nivetheni/TCI_express_srihari/TCI_express/cid_ref_full.jpg")
 
-my_list = [{'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{9: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{9: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{9: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{9: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{9: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{9: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{9: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{9: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{3: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}, {9: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{3: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{3: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{11: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}]
-for i,each in enumerate(my_list):
-    each['cid'] = [img]
-    each["frame_id"] = i+1
-    for info in each["detection_info"]:
-        info[list(info.keys())[0]]["crops"] = [img]
+# my_list = [{'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{3: {'type': 'Person', 'activity': 'walking', 'confidence': 0,  'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}, {5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': None, 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}, {10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}]
+# for i,each in enumerate(my_list):
+#     each['cid'] = [img]
+#     each["frame_id"] = i+1
+#     for info in each["detection_info"]:
+#         info[list(info.keys())[0]]["crops"] = [img]
 
 
 
@@ -99,22 +99,19 @@ def output_func(my_list):
     frame_cid = {}
     did = []
     did_dict = {}
-    did_info = []
+   
     most_occurred_activities = {}
+    activity_scores= {}
     people_count_list =[]
     vehicle_count_list = []
     object_count_list = []
     crops = {}
-   
-    person_ids = []
-    vehicle_ids = []
-    object_ids = []
 
     count_non_empty = sum(1 for item in my_list if item != '')
     sub_my_list = my_list[0]
     h=len(my_list[0])
 
-    # print(sub_my_list)
+
     last_frame_data = []
     for i in range(1, len(sub_my_list)):
         if len(sub_my_list[h-i]["detection_info"]) > 0:
@@ -124,8 +121,7 @@ def output_func(my_list):
             continue
     lastframe_re_ids = [str(list(each.keys())[0]) for each in last_frame_data]
     cidss_dic =  {}
-    #create dic with list of cid for each reid
-    #{1: {'type': 'Person', 'activity': 'Unknow', 'confidence': 0, 'did': '', 'track_type': '100', 'crops': 'QmfMcu2MMU7YXqsXEKXV6nYwhWvWWZAxsKp8BAPduwwrED', 'anamoly_score': None, 'activity_score': None}}
+    
     for each in sub_my_list:
         if len(each['detection_info'])>0:
             for every in each['detection_info']:
@@ -151,59 +147,118 @@ def output_func(my_list):
             idxx = round(len(cidss_dic[each])/2)
             final_cid[each] = cidss_dic[each][idxx]
 
-
-
-    for item in my_list:
-
-       for x in item:
+    for x in my_list:
+        for item in x:
+            frame_anamoly_wgt.append(item['frame_anamoly_wgt'])
+            frame_id = item['frame_id']
+            detection_info = item['detection_info']
+            if detection_info ==[]:
+                continue
+            else:
+                frames.append(frame_id)
+            person = 0
+            vehicle = 0
+            object = 0
+            cid = item['cid']
+            for detection in item['detection_info']:
+                for key,values in detection.items():
+                    re_id = key 
+                    did = values.get('did')
+#DID dictionary , it holds re_id and list of DIDs corresponding to each re_id
+                    if key in did_dict :
+                       did_dict[key].append(did)                             
+                    else:
+                       did_dict[key] = [did]
    
-        frame_anamoly_wgt.append(x['frame_anamoly_wgt'])
-        frame_id = x['frame_id']
-        detection_info = x['detection_info']
-        if detection_info ==[]:
-            continue
-        else:
-            frames.append(frame_id)
-        person = 0
-        vehicle = 0
-        object = 0
-        cid = x['cid']
-        for detection in x['detection_info']:
-            for key, value in detection.items():
-                did = value.get('did')
-                if key in did_dict :
-                   did_dict[key].append(did)                             
-                else:
-                   did_dict[key] = [did]
-   
-                if value['type'] == 'Person':
-                    
-                    person += 1
-                    person_counts[frame_id] = person
-        
-                    
-                    person_counts[frame_id] = person
-                elif value['type'] == 'Vehicle':
-                       vehicle +=1
-                       vehicle_counts[frame_id] = vehicle
-                  
+
+                    if values['type'] == 'Person' and re_id not in people_count_list :
+                            people_count_list.append(re_id)
+                            person += 1
+                            person_counts[frame_id] = person
+
+                    elif values['type'] == 'Vehicle' and re_id not in vehicle_count_list :
+                        vehicle_count_list.append(re_id)
+                        vehicle +=1
+                        vehicle_counts[frame_id] = vehicle
                        
-                elif value['type'] == 'Elephant':
-                       object +=1
-                       object_counts[frame_id] = object 
+                    elif values['type'] == 'Elephant' and re_id not in object_count_list :
+                        object_count_list.append(re_id)
+                        object +=1
+                        object_counts[frame_id] = object 
+              
+                    detection_score = float(values.get('anamoly_score') or 0)
+                    activity_score =  float(values.get('activity_score') or 0)
+                    
+                    track = values.get('track_type') or None
+                    detect_type = values.get('type')  
+                    
+                    did  =  did_dict[re_id][0]
+                     
+                    crop = values.get('crops') 
+
+                    for m in final_cid:
+                        if m==re_id:
+                            c_id = final_cid[m]
+             
+                    activity = values.get('activity')
+
+#activity score dictionary holds activity score for each activity
+                    activity_scores[activity] = activity_score
+
+#detection score dictionary , it holds re_id and list of detection scores corresponding to each re_id
+                    if re_id in det_score_dict :
+                        if detection_score not in det_score_dict[re_id]:
+                            det_score_dict[re_id].append(detection_score)
+                    else:
+                        det_score_dict[re_id] = [detection_score]
+
+#activity dictionary , it holds re_id and list of activities corresponding to each re_id
+                    if re_id in activity_dict:
+                        if activity not in activity_dict[re_id]:
+                                activity_dict[re_id].append(activity)
+                                
+                    else:
+                        activity_dict[re_id] = [activity]
+                        
+#filtering most frequent activity for each re_id from the list of activities
+                    for id, activities in activity_dict.items():
+                            most_occurred_activity = max(set(activities), key=activities.count)
+                            most_occurred_activities[id] = most_occurred_activity
+                        
+                    
+                    act  =   most_occurred_activities[re_id]
+
+                    act_score = activity_scores[act]
+             
+                    det_score = det_score_dict[re_id]
+
                  
+                    if did == " " or "" or None:
+                        memDID = None
+                    else:
+                        memDID = str(did)
 
+                    temp = {
+                                "class": detect_type,
+                                "detectionScore": det_score,
+                                "activityScore": act_score,
+                                "track": track,
+                                "id": str(re_id),
+                                "memDID" : memDID,
+                                "activity": act,
+                                "detectTime" : "",
+                                "cids": c_id
+                            } 
+                    temp_list.append(temp)            
+    
+    for obj in temp_list:
+      if not any(x.get("id") == obj.get("id") for x in metaObj):
+        metaObj.append(obj)
 
-
-    temp = [key for elem in my_list for x in elem for detection in x['detection_info'] for key, values in detection.items() if values.get('type') == 'Person' and values.get('anamoly_score') is not None and values['anamoly_score'] > 50]
-    for id in temp:
-        if id not in ids_to_be_monitored:
-            ids_to_be_monitored.append(id)
-
-
-
-
-
+    for items in metaObj:
+        items['detectionScore'] = sum(items['detectionScore'])/len(items['detectionScore'])
+        items["detectTime"] = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
+           
     vehicle_count = sum(vehicle_counts.values())  # this variable will hold the count of total vehicles detected overall
     person_count = sum(person_counts.values())  # this variable will hold the count of total person detected overall    
     animal_count = sum(object_counts.values())  # this variable will hold the count of total elephants detected overall
@@ -230,107 +285,6 @@ def output_func(my_list):
        avg_Batchcount_person = math.ceil(person_count / frame_count_person)
     else :
         avg_Batchcount_person = 0
-
-    for x in my_list:
-        for item in x:
-            for detection in item['detection_info']:
-                for key,values in detection.items():
-              
-                    detection_score = float(values.get('anamoly_score') or 0)
-                    activity_score =  float(values.get('activity_score') or 0)
-                    did  =  values.get('did')
-                    track = values.get('track_type')
-                    detect_type = values.get('type')  
-                    re_id = key 
-                     
-                    crop = values.get('crops') 
-                    if detect_type == 'Person' and re_id not in people_count_list:
-                        people_count_list.append(re_id)
-                    if detect_type == 'Vehicle' and re_id not in vehicle_count_list:
-                        vehicle_count_list.append(re_id)
-                    if detect_type == 'Elephant' and re_id not in object_count_list:
-                        object_count_list.append(re_id)
-                    # if re_id in crops:
-                    #     if crop not in crops[re_id]:
-                    #             crops[re_id].append(crop)
-                    # else:
-                    #      crops[re_id] = [crop]
-                    for m in final_cid:
-                        if m==re_id:
-                            c_id = final_cid[m]
-                    # m = int(len(crops[re_id]))
-                    
-                    # if m%2==0 and m<2:
-                      
-                    #     c_id = crops[re_id][0]
-                    # elif  m%2==0 and m>2:
-                    #     i = int(m/2) + 1
-                    #     c_id = crops[re_id][i]
-                    # elif m%2!=0 and m>2:
-                    #     i=int((m+1)/2)
-                    #     c_id = crops[re_id][i]      
-                    # elif m==1:
-                    #     c_id = crops[re_id][0]
-
-                    activity = values.get('activity')
-
-
-                    if re_id in det_score_dict :
-                        if detection_score not in det_score_dict[re_id]:
-                            det_score_dict[re_id].append(detection_score)
-                    else:
-                        det_score_dict[re_id] = [detection_score]
-
-                    if re_id in did_dict :
-                        did_dict[re_id].append(did)    
-                    else:
-                         did_dict[re_id] = [did]
-
-                    
-                    if re_id in activity_dict:
-                        if activity not in activity_dict[re_id]:
-                                activity_dict[re_id].append(activity)
-                    else:
-                        activity_dict[re_id] = [activity]
-
-                    for id, activities in activity_dict.items():
-                            most_occurred_activity = max(set(activities), key=activities.count)
-                            most_occurred_activities[id] = most_occurred_activity
-                    
-                    act  =   activity_dict[re_id]
-                
-                    det_score = det_score_dict[re_id]
-
-                 
-                    if did == " " or "" or None:
-                        memDID = " "
-                    else:
-                        memDID = did
-
-                  
-
-
-                    temp = {
-                                "class": detect_type,
-                                "detectionScore": det_score,
-                                "activityScore": activity_score,
-                                "track": track,
-                                "id": str(re_id),
-                                "memDID" : memDID,
-                                "activity": act,
-                                "detectTime" : "",
-                                "cids": c_id
-                            } 
-                    temp_list.append(temp)            
-    
-    for obj in temp_list:          #this make sures that only unique entries are in metaObj
-        if obj not in metaObj:
-            metaObj.append(obj)
-    for items in metaObj:
-        items['detectionScore']=sum(items['detectionScore'])/len(items['detectionScore'])
-        items["detectTime"] = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
-           
-    
     
     if len(people_count_list) ==1:
         count_p = len(people_count_list)
@@ -361,7 +315,7 @@ def output_func(my_list):
                   "vehicleCount": (count_v),
                   "ObjectCount" : (count_o),
                   },
-        "anamolyIds": ids_to_be_monitored,
+        "anomalyIds": ids_to_be_monitored,
          'cid' : finn,
         "object": metaObj
        
@@ -379,38 +333,6 @@ def output_func(my_list):
         "metaData": metaBatch
     }
   
-
-    # object_updated = [each for each in primary["metaData"]["object"] if each["id"] in lastframe_re_ids or "did" in each["id"]]
-
-
-    # # find counts of vehicle person and elephant
-    # vehicle_cnt = 0
-    # ppl_cnt = 0
-    # ele_cnt = 0
-    # for each in object_updated:
-    #     if each["type"] == "Vehicle":
-    #         vehicle_cnt = vehicle_cnt + 1
-    #     if each["type"] == "Person":
-    #         ppl_cnt = ppl_cnt + 1
-    #     if each["type"] == "Elephant":
-    #         ele_cnt = ele_cnt + 1 
-    # primary["metaData"]["count"]["peopleCount"] = ppl_cnt
-    # primary["metaData"]["count"]["vehicleCount"] = vehicle_cnt
-    # primary["metaData"]["count"]["ObjectCount"] = ele_cnt
-    # primary["metaData"]["object"] = object_updated
-    # total_count_1  =len(primary["metaData"]["object"])
-    # primary["metaData"]["detect"] = total_count_1
-
-    # if primary["metaData"]['cid']:
-    #     # convert full frame numpy to cid
-    #     pathh = "./"+primary['deviceid']+"/cid_ref_full.jpg"
-    #     padding_img(pathh,primary["metaData"]['cid'][0])
-    #     primary["metaData"]['cid'] = conv_path2cid(pathh)
-
-    #     for each in primary["metaData"]["object"]:
-    #         pathh = "./"+primary['deviceid']+"/cid_ref.jpg"
-    #         padding_img(pathh,each["cids"][0])
-    #         each["cids"] = conv_path2cid(pathh)
     return primary
 
-print(output_func(my_list))
+# print(output_func(my_list))

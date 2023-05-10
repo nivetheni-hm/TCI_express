@@ -158,6 +158,7 @@ async def process_publish(device_id,batch_data,device_data):
     # print(batch_data)
 
     output_json = output_func(batch_data)
+    
     # print(output_json)
     batchId = str(uuid.uuid4())
     output_json["tenant_id"] = device_data['tenantId']
@@ -171,12 +172,19 @@ async def process_publish(device_id,batch_data,device_data):
     franaavg = sum(output_json["metaData"]["frameAnomalyScore"])/len(output_json["metaData"]["frameAnomalyScore"])
     output_json["metaData"]["frameAnomalyScore"] = franaavg
     output_json["metaData"]['detect'] = len(output_json["metaData"]['object'])
-    output_json["metaData"]['count']['peopleCount'] = len(output_json["metaData"]['object'])
+    output_json["metaData"]['count']["peopleCount"] = len(output_json["metaData"]['object'])
     output_json["version"] = "v0.0.3"
-    print(output_json)
-    dbpush_activities(output_json)
-    await json_publish_activity(primary=output_json)
+    anamoly = ["carrying","throwing","sitting on the box","standing on the box"]
+    if [True for each in [each["activity"][0] for each in output_json['metaData']['object']] if each in anamoly][0]:
+        output_json["type"] = "anamoly"
+        await json_publish_activity(primary=output_json)
 
+    print(output_json)
+    with open("test.json", "a") as outfile:
+        # data = json.load(outfile)
+        # data.append(output_json)
+        json.dump(output_json, outfile)
+    
 def trackmain(
     input,
     device_data,
@@ -236,7 +244,6 @@ def trackmain(
             crop_img = save_one_box([*box], im, save=False)
             did = ""
             track_type = "100"
-            # print(len(confff),len(pred))
             cd = int(trackid)
             cidd = [crop_img]
             if len(confff) == len(pred[0]):
@@ -269,7 +276,7 @@ def trackmain(
             isolate_queue[device_id] = []
             isolate_queue[device_id].append(final_frame)
         
-        # print([{each:len(isolate_queue[each])} for each in isolate_queue])
+        print([{each:len(isolate_queue[each])} for each in isolate_queue])
         for each in isolate_queue:
             
             if len(isolate_queue[each])>29:
