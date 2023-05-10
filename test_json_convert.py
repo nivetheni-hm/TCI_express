@@ -1,6 +1,5 @@
 import cv2
 import math
-import cv2
 #.env vars loaded
 import os
 from os.path import join, dirname
@@ -15,17 +14,7 @@ from pytz import timezone
 import time
 from datetime import datetime
 
-img = cv2.imread("/home/nivetheni/TCI_express_srihari/TCI_express/cid_ref_full.jpg")
-
-# my_list = [{'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{3: {'type': 'Person', 'activity': 'walking', 'confidence': 0,  'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}, {5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': None, 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{6: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}, {10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}, {'frame_id': 0, 'frame_anamoly_wgt': 5.0, 'detection_info': [{10: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': 'testing', 'track_type': '100', 'crops': 'testing', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'testing'}]
-# for i,each in enumerate(my_list):
-#     each['cid'] = [img]
-#     each["frame_id"] = i+1
-#     for info in each["detection_info"]:
-#         info[list(info.keys())[0]]["crops"] = [img]
-
-
-
+my_list = [{'frame_id': 1, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 2, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 3, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 4, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 5, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': '', 'track_type': '100', 'crops': 'cropstesting', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'cropstesting'}, {'frame_id': 6, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': '', 'track_type': '100', 'crops': 'cropstesting', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'cropstesting'}, {'frame_id': 7, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': '', 'track_type': '100', 'crops': 'cropstesting', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'cropstesting'}, {'frame_id': 8, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': '', 'track_type': '100', 'crops': 'cropstesting', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'cropstesting'}, {'frame_id': 9, 'frame_anamoly_wgt': 5.0, 'detection_info': [{5: {'type': 'Person', 'activity': 'walking', 'confidence': 0, 'did': '', 'track_type': '100', 'crops': 'cropstesting', 'anamoly_score': 5.0, 'activity_score': 10}}], 'cid': 'cropstesting'}, {'frame_id': 10, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 11, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 12, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 13, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 14, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 15, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 16, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 17, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 18, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 19, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 20, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 21, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 22, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 23, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 24, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 25, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 26, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 27, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 28, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 29, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}, {'frame_id': 30, 'frame_anamoly_wgt': None, 'detection_info': None, 'cid': None}]
 # print(my_list)
 
 
@@ -85,6 +74,7 @@ def padding_img(path, frame):
     
 
 def output_func(my_list):
+    my_list = [d for d in my_list if d['detection_info'] is not None]
     my_list = [my_list]
     frames=[]               # this variable will hold the frame_id of all the frames in which a atleast one detection was made"
     ids_to_be_monitored=[]  #re-id of all the person type detection with anamoly score>50
@@ -107,9 +97,14 @@ def output_func(my_list):
     object_count_list = []
     crops = {}
 
+
+
     count_non_empty = sum(1 for item in my_list if item != '')
     sub_my_list = my_list[0]
     h=len(my_list[0])
+    
+    
+
 
 
     last_frame_data = []
@@ -271,7 +266,11 @@ def output_func(my_list):
     frame_count_animal = len(object_counts)    # this variable will hold the count of total frames in which elephant was detected
     frame_count = len(frames)
     
-
+    
+    t_list = [key for elem in my_list for x in elem for detection in x['detection_info'] for key, values in detection.items() if values.get('type') == 'Person' and values.get('anamoly_score') is not None and values['anamoly_score'] > 50]
+    for id in t_list:
+        if id not in ids_to_be_monitored:
+            ids_to_be_monitored.append(id)
 
     if frame_count_vehicle != 0 and vehicle_count >= frame_count_vehicle:
         avg_Batchcount_vehicle = math.ceil(vehicle_count / frame_count_vehicle)
@@ -335,4 +334,4 @@ def output_func(my_list):
   
     return primary
 
-# print(output_func(my_list))
+print(output_func(my_list))
