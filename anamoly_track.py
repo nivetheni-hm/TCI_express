@@ -201,7 +201,7 @@ def trackmain(
     iou = 0.4
 ):
     
-    # print("Starting the detection and tracking")
+    print("Starting the detection and tracking")
 
     global frame_cnt
 
