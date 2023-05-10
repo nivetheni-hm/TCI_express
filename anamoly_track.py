@@ -184,7 +184,7 @@ def process_publish(device_id,batch_data,device_data):
     if output_json['metaData']['object']:
         
         # for each in output_json['metaData']['object']:
-        if len([True for each in [each["activity"][0] for each in output_json['metaData']['object']] if each in anamoly])>0:
+        if len([True for each in [each["activity"] for each in output_json['metaData']['object']] if each in anamoly])>0:
             output_json["type"] = "anamoly"
             asyncio.run(json_publish_activity(primary=output_json))
             print(output_json)
