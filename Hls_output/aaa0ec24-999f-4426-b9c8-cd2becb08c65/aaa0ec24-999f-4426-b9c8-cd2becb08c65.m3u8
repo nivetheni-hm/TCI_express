@@ -1,7 +1,0 @@
-#EXTM3U
-#EXT-X-VERSION:3
-#EXT-X-MEDIA-SEQUENCE:1
-#EXT-X-TARGETDURATION:11
-
-#EXTINF:10.890015602111816,
-https://localhost/live/streamaaa0ec24-999f-4426-b9c8-cd2becb08c65/segment.0.ts

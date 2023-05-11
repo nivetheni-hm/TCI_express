@@ -191,6 +191,7 @@ def process_publish(device_id,batch_data,device_data):
             dbpush_activities(output_json)
         else:
             print("DB insert")
+            print(output_json)
             dbpush_activities(output_json)
 
     with open("test.json", "a") as outfile:
@@ -214,7 +215,7 @@ def trackmain(
     iou = 0.4
 ):
     
-    # print("Starting the detection and tracking")
+    print("Starting the detection and tracking")
 
     global frame_cnt
 
@@ -290,7 +291,7 @@ def trackmain(
         isolate_queue[device_id] = []
         isolate_queue[device_id].append(final_frame)
         
-    print([{each:len(isolate_queue[each])} for each in isolate_queue])
+    # print([{each:len(isolate_queue[each])} for each in isolate_queue])
     for each in isolate_queue:
         
         if len(isolate_queue[each])>29:
