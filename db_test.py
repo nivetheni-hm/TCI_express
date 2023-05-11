@@ -82,10 +82,10 @@ def dbpush_activities(act_out):
         
         # Create a new Image
         cursor.execute("""
-            INSERT INTO "Images" (id, name, "timeStamp", uri, "activityId", "thumbnailId", "logId", "createdAt", "updatedAt")
+            INSERT INTO "Images" (id, name, "timeStamp", uri, "tenantId", "activityId", "thumbnailId", "logId", "createdAt", "updatedAt")
             VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
             """,
-            ((str(img_uuid),), img_name, act_out['timestamp'], act_out['metaData']['cid'], activity_id, None, None)
+            ((str(img_uuid),), img_name, act_out['timestamp'], act_out['metaData']['cid'], act_out['tenant_id'], activity_id, None, None)
         )  
         
         # Get the ID of the new Activity
@@ -153,7 +153,7 @@ def dbpush_activities(act_out):
                             
                         # Create a new Activity Log
                         cursor.execute("""
-                            INSERT INTO "Logs" (id, "_id", class, track, activity, cid, "memberId", "activityId", "createdAt", "updatedAt")
+                            INSERT INTO "Logs" (id, "tenantId", "_id", class, track, activity, cid, "memberId", "activityId", "createdAt", "updatedAt")
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
                             """,
                             ((str(log_uuid),), item["id"], item["class"], item["track"], (item["activity"])[0], item["cids"], member_id, activity_id)
@@ -173,10 +173,10 @@ def dbpush_activities(act_out):
                         
                         # Create a new Image
                         cursor.execute("""
-                            INSERT INTO "Images" (id, name, "timeStamp", uri, "activityId", "thumbnailId", "logId", "createdAt", "updatedAt")
+                            INSERT INTO "Images" (id, name, "timeStamp", uri, "tenantId", "activityId", "thumbnailId", "logId", "createdAt", "updatedAt")
                             VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
                             """,
-                            ((str(img_uuid),), img_name, item["detectTime"], item["cids"], None, None, log_id)
+                            ((str(img_uuid),), img_name, item["detectTime"], item["cids"], act_out['tenant_id'], None, None, log_id)
                         )  
                         
                         # Get the ID of the new Activity

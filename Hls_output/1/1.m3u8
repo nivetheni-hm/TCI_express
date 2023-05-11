@@ -1,9 +1,0 @@
-#EXTM3U
-#EXT-X-VERSION:3
-#EXT-X-MEDIA-SEQUENCE:1
-#EXT-X-TARGETDURATION:12
-
-#EXTINF:10.65727710723877,
-https://localhost/live/stream1/segment.0.ts
-#EXTINF:11.999693870544434,
-https://localhost/live/stream1/segment.1.ts
