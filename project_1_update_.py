@@ -49,28 +49,28 @@ def conv_path2cid(pathh):
     return output
 
 def padding_img(path, frame):
-    # Set target size
-    width, height = 640, 360
+    # # Set target size
+    # width, height = 640, 360
 
-    # Load image
-    img = frame
-    # Get current size
-    h, w, _ = img.shape
+    # # Load image
+    # img = frame
+    # # Get current size
+    # h, w, _ = img.shape
 
-    # Calculate padding
-    top = bottom = (height - h) // 2
-    left = right = (width - w) // 2
-    top, left,right,bottom = abs(top), abs(left),abs(right),abs(bottom)
+    # # Calculate padding
+    # top = bottom = (height - h) // 2
+    # left = right = (width - w) // 2
+    # top, left,right,bottom = abs(top), abs(left),abs(right),abs(bottom)
 
-    # Add black padding
-    color = [0, 0, 0] # Black
-    img_padded = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT,value=color)
+    # # Add black padding
+    # color = [0, 0, 0] # Black
+    # img_padded = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT,value=color)
 
-    # Resize image
-    img_resized = cv2.resize(img_padded, (width, height))
+    # # Resize image
+    # img_resized = cv2.resize(img_padded, (width, height))
 
-    # Save image
-    cv2.imwrite(path, img_resized)
+    # # Save image
+    cv2.imwrite(path, frame)
     
 
 def output_func(my_list):

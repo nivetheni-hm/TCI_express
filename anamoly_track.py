@@ -189,15 +189,21 @@ def process_publish(device_id,batch_data,device_data):
             asyncio.run(json_publish_activity(primary=output_json))
             print(output_json)
             dbpush_activities(output_json)
+            print("DB insert")
+            
+            with open("test.json", "a") as outfile:
+                # data = json.load(outfile)
+                # data.append(output_json)
+                json.dump(output_json, outfile)
         else:
             print("DB insert")
             print(output_json)
             dbpush_activities(output_json)
+            with open("test.json", "a") as outfile:
+                # data = json.load(outfile)
+                # data.append(output_json)
+                json.dump(output_json, outfile)
 
-    with open("test.json", "a") as outfile:
-        # data = json.load(outfile)
-        # data.append(output_json)
-        json.dump(output_json, outfile)
     
 def trackmain(
     input,
