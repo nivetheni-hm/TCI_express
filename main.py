@@ -170,17 +170,12 @@ def gst_launcher(device_data, frame_skip):
     # print("DEVICE INFO: ", device_info)
     
     device_id = device_data['deviceId']
-    # location = device_data['rtsp'] # Fetching device info
-    # username = device_data['username']
-    # password = device_data['password']
-    location = 'rtsp://216.48.184.201:8554//stream1'
-    username = 'test'
-    password = 'test123456789'
-    encode_type = 'MP4'
+    location = device_data['rtsp'] # Fetching device info
+    username = device_data['username']
+    password = device_data['password']
     subscription = device_data['subscriptions']
-    # encode_type = device_data['videoEncodingInformation']
-    # ddns_name = device_data['ddns']
-    ddns_name = None
+    encode_type = device_data['videoEncodingInformation']
+    ddns_name = device_data['ddns']
     urn = device_data['urn']
     lat = device_data['lat']
     long = device_data['long']
@@ -203,7 +198,7 @@ def gst_launcher(device_data, frame_skip):
     if((encode_type.lower()) == "h265"):
         pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=true ! tee name=g_t_{device_id} ! queue name=g_q_{device_id} ! rtph265depay name=g_depay_{device_id} ! h265parse name=g_parse_{device_id} ! avdec_h265 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=200 g_t_{device_id}. ! queue name=h_q_{device_id} ! rtph265depay name=h_depay_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}'
     if((encode_type.lower()) == "mp4"):
-        pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" latency=50 timeout=300 drop-on-latency=true ! decodebin name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=10'
+        pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" latency=50 timeout=300 drop-on-latency=true tee name=g_t_{device_id} ! queue name=g_q_{device_id} ! decodebin name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=10 g_t_{device_id}. ! queue name=h_q_{device_id} ! x264enc name=h_enc_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}'
     
     pipeline = Gst.parse_launch(pipeline_str)
     

@@ -8,6 +8,7 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 import ast
 import uuid
+import reverse_geocode
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -83,7 +84,7 @@ def dbpush_activities(act_out):
         # Create a new Image
         cursor.execute("""
             INSERT INTO "Images" (id, name, "timeStamp", uri, "tenantId", "activityId", "thumbnailId", "logId", "createdAt", "updatedAt")
-            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
             """,
             ((str(img_uuid),), img_name, act_out['timestamp'], act_out['metaData']['cid'], act_out['tenant_id'], activity_id, None, None)
         )  
@@ -116,6 +117,29 @@ def dbpush_activities(act_out):
                 actMeta_id = cursor.fetchone()['id']
                 
                 print("ACTIVITY META DATA INSERTED: ", actMeta_id)
+                
+                # generate a UUID
+                geo_uuid = uuid.uuid4()
+                
+                coordinates = [(act_out['geo']['latitude'], act_out['geo']['longitude'])]
+                result = reverse_geocode.search(coordinates)
+                loc_name = str(result[0]['city'])
+                
+                # Create a new Activity Meta
+                cursor.execute("""
+                    INSERT INTO "Geo" (id, latitude, name, longitude, "deviceMetaDataId", "metaId", "createdAt", "updatedAt")
+                    SELECT %s, %s, %s, %s, d."metaDataId", %s, NOW(), NOW()
+                    FROM "Device" d
+                    WHERE d.id = %s
+                    RETURNING id;
+                    """,
+                    ((str(geo_uuid),), act_out['geo']['latitude'], loc_name, act_out['geo']['longitude'], actMeta_id, act_out['deviceid'])
+                )
+                
+                # Get the ID of the new Activity
+                geo_id = cursor.fetchone()['id']
+                
+                print("GEO DATA INSERTED: ", geo_id)
                 
                 if act_out["metaData"]["object"] is not None:
                     for item in act_out["metaData"]["object"]:
@@ -154,9 +178,9 @@ def dbpush_activities(act_out):
                         # Create a new Activity Log
                         cursor.execute("""
                             INSERT INTO "Logs" (id, "tenantId", "_id", class, track, activity, cid, "memberId", "activityId", "createdAt", "updatedAt")
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
                             """,
-                            ((str(log_uuid),), item["id"], item["class"], item["track"], (item["activity"])[0], item["cids"], member_id, activity_id)
+                            ((str(log_uuid),), act_out['tenant_id'], item["id"], item["class"], item["track"], (item["activity"])[0], item["cids"], member_id, activity_id)
                         )
                         
                         # Get the ID of the new Activity
@@ -174,7 +198,7 @@ def dbpush_activities(act_out):
                         # Create a new Image
                         cursor.execute("""
                             INSERT INTO "Images" (id, name, "timeStamp", uri, "tenantId", "activityId", "thumbnailId", "logId", "createdAt", "updatedAt")
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
                             """,
                             ((str(img_uuid),), img_name, item["detectTime"], item["cids"], act_out['tenant_id'], None, None, log_id)
                         )  
@@ -206,7 +230,11 @@ def dbpush_activities(act_out):
 
 
 # activity_out = {'type': 'activity', 'deviceid': '793230b2-5dc9-41b4-ad38-57051e7bf26b', 'batchid': '6258b3c5-db85-4f3d-be72-eec08e5f1245', 'timestamp': '2023-05-09 19:09:14.817661', 'geo': {'latitude': 26.25, 'longitude': 88.11}, 'metaData': {'detect': 3, 'frameAnomalyScore': 5.0, 'count': {'peopleCount': 3, 'vehicleCount': 0, 'ObjectCount': 0}, 'anamolyIds': [], 'cid': 'QmXYHxYn5MYnszqKQ3iT4jEtPmf4ofGvNpY8vUjf8rrbqe', 'object': [{'class': 'Person', 'detectionScore': 5.0, 'activityScore': 10.0, 'track': '100', 'id': '19', 'memDID': '', 'activity': ['walking'], 'detectTime': '2023-05-09 19:09:13.551897', 'cids': 'QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH'}, {'class': 'Person', 'detectionScore': 5.0, 'activityScore': 10.0, 'track': '100', 'id': '13', 'memDID': '', 'activity': ['walking'], 'detectTime': '2023-05-09 19:09:13.551956', 'cids': 'QmbLJbwuobWPigypZ5pFDot5Yyu3YgAwyntex94TjY7NHC'}, {'class': 'Person', 'detectionScore': 5.0, 'activityScore': 10.0, 'track': '100', 'id': '20', 'memDID': '', 'activity': ['walking'], 'detectTime': '2023-05-09 19:09:13.551977', 'cids': 'QmQErEu43Z6QcQxjLxCXd8xWcSDURtcCZVg4n3b6t4piKA'}]}, 'tenant_id': '3d77252b-ba26-451a-8ad4-ee18159a6db8', 'version': 'v0.0.3'}
-        
+
+# coordinates = [(activity_out['geo']['latitude'], activity_out['geo']['longitude'])]
+# result = reverse_geocode.search(coordinates)
+# loc_name = result[0]['city']
+# print(loc_name)
 # dbpush_activities(activity_out)
 
 # print(activity_out['timestamp'])

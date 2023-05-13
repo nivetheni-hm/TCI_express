@@ -13,6 +13,8 @@ FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # yolov5 strongsort root directory
 import sys
 from nanoid import generate
+import threading
+
 
 if str(ROOT / 'Detection') not in sys.path:
     sys.path.append(str(ROOT / 'Detection'))
@@ -148,7 +150,7 @@ async def json_publish_activity(primary):
     print(f'Ack: stream={ack.stream}, sequence={ack.seq}')
     print("Activity is getting published")
 
-async def process_publish(device_id,batch_data,device_data):
+def process_publish(device_id,batch_data,device_data):
     # print(device_id," ",batch_data)
     
     
@@ -169,21 +171,39 @@ async def process_publish(device_id,batch_data,device_data):
     output_json['geo']['longitude'] = device_data['long']
     # geo = "testing_geo"
     # output_json["geo"] = geo
-    franaavg = sum(output_json["metaData"]["frameAnomalyScore"])/len(output_json["metaData"]["frameAnomalyScore"])
+    if len(output_json["metaData"]["frameAnomalyScore"])>0:
+        franaavg = sum(output_json["metaData"]["frameAnomalyScore"])/len(output_json["metaData"]["frameAnomalyScore"])
+    else:
+        franaavg = 0
     output_json["metaData"]["frameAnomalyScore"] = franaavg
     output_json["metaData"]['detect'] = len(output_json["metaData"]['object'])
     output_json["metaData"]['count']["peopleCount"] = len(output_json["metaData"]['object'])
     output_json["version"] = "v0.0.3"
     anamoly = ["carrying","throwing","sitting on the box","standing on the box"]
-    if [True for each in [each["activity"][0] for each in output_json['metaData']['object']] if each in anamoly][0]:
-        output_json["type"] = "anamoly"
-        await json_publish_activity(primary=output_json)
+    
+    if output_json['metaData']['object']:
+        
+        # for each in output_json['metaData']['object']:
+        if len([True for each in [each["activity"] for each in output_json['metaData']['object']] if each in anamoly])>0:
+            output_json["type"] = "anamoly"
+            asyncio.run(json_publish_activity(primary=output_json))
+            print(output_json)
+            dbpush_activities(output_json)
+            print("DB insert")
+            
+            with open("test.json", "a") as outfile:
+                # data = json.load(outfile)
+                # data.append(output_json)
+                json.dump(output_json, outfile)
+        else:
+            print("DB insert")
+            print(output_json)
+            dbpush_activities(output_json)
+            with open("test.json", "a") as outfile:
+                # data = json.load(outfile)
+                # data.append(output_json)
+                json.dump(output_json, outfile)
 
-    print(output_json)
-    with open("test.json", "a") as outfile:
-        # data = json.load(outfile)
-        # data.append(output_json)
-        json.dump(output_json, outfile)
     
 def trackmain(
     input,
@@ -267,23 +287,24 @@ def trackmain(
             cidd = [im]
         final_frame = {"frame_id":frame_cnt,"frame_anamoly_wgt":frame_anamoly_wgt,"detection_info":frame_info_anamoly,"cid":cidd}
         # print(final_frame)
-
-        if device_id in isolate_queue:
-            # print("entering if ")
-            isolate_queue[device_id].append(final_frame)
-        else:
-            # print("entering else")
-            isolate_queue[device_id] = []
-            isolate_queue[device_id].append(final_frame)
+    else:
+        final_frame = {"frame_id":None,"frame_anamoly_wgt":None,"detection_info":None,"cid":None}
+    if device_id in isolate_queue:
+        # print("entering if ")
+        isolate_queue[device_id].append(final_frame)
+    else:
+        # print("entering else")
+        isolate_queue[device_id] = []
+        isolate_queue[device_id].append(final_frame)
         
-        print([{each:len(isolate_queue[each])} for each in isolate_queue])
-        for each in isolate_queue:
-            
-            if len(isolate_queue[each])>29:
-                # print("batch length of ",device_id,":",len(isolate_queue[each]))
-                batch_data = isolate_queue[each]
-                isolate_queue[each] = []
-                asyncio.run(process_publish(device_id,batch_data,device_data))
+    # print([{each:len(isolate_queue[each])} for each in isolate_queue])
+    for each in isolate_queue:
+        
+        if len(isolate_queue[each])>29:
+            # print("batch length of ",device_id,":",len(isolate_queue[each]))
+            batch_data = isolate_queue[each]
+            isolate_queue[each] = []
+            threading.Thread(target=process_publish,args = (device_id,batch_data,device_data)).start()
 
 
         # for i, (im, pred) in enumerate(zip(yolo_preds.ims, yolo_preds.pred)):
