@@ -15,11 +15,12 @@ import torch
 import multiprocessing
 from multiprocessing import Process, Queue, Pool
 import uuid
-
+import threading
 # importing required functions
 from db_fetch import fetch_db #to fetch data from postgres
 from yolo_slowfast.deep_sort.deep_sort import DeepSort # import Deepsort tracking model
 from anamoly_track import trackmain # model inference part
+from dev import device_details
 
 Gst.init(None) # Initializes Gstreamer, it's variables, paths
 nc_client = NATS() # global Nats declaration
@@ -27,7 +28,7 @@ nc_client = NATS() # global Nats declaration
 # define constants and variables
 frame_skip = {}
 pipelines = []
-device_details = []
+# device_details = []
 known_whitelist_faces = []
 known_whitelist_id = []
 known_blacklist_faces = []
@@ -77,7 +78,8 @@ def numpy_creation(img_arr, device_id, device_timestamp, device_info, track_obj,
         
         if skip_dict[device_id] % 4 == 0:
             datainfo = [known_whitelist_faces, known_blacklist_faces, known_whitelist_id, known_blacklist_id]
-            activity_trackCall(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj)
+            # activity_trackCall(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj)
+            threading.Thread(target=activity_trackCall,args=(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj,)).start()
 
 class PipelineWatcher:
     def __init__(self, pipelines):
@@ -266,6 +268,10 @@ def call_gstreamer(device_details): # iterate through the device list and start 
     for i in range(num_processes):
         start_index = i * devices_per_process
         end_index = min((i + 1) * devices_per_process, len(device_details))
+        print("--------------------------------------------------")
+        print(device_details[start_index:end_index])
+        print(len(device_details[start_index:end_index]))
+        print("--------------------------------------------------")
         devices_for_process = device_details[start_index:end_index]
         
         # Start a new process for this batch of devices
@@ -276,8 +282,9 @@ def call_gstreamer(device_details): # iterate through the device list and start 
 async def main():
     global device_details
     # fetch device details
-    device_details = fetch_db()
+    # device_details = fetch_db()
     call_gstreamer(device_details)
+
 
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn', force=True)
@@ -291,3 +298,4 @@ if __name__ == '__main__':
     except RuntimeError as e:
         print("error ", e)
         print(torch.cuda.memory_summary(device=None, abbreviated=False), "cuda")
+   
