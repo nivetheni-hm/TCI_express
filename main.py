@@ -16,17 +16,21 @@ import multiprocessing
 from multiprocessing import Process, Queue, Pool
 import uuid
 import threading
+import psycopg2
+
 # importing required functions
 from db_fetch import fetch_db #to fetch data from postgres
 from yolo_slowfast.deep_sort.deep_sort import DeepSort # import Deepsort tracking model
 from anamoly_track import trackmain # model inference part
 from dev import device_details
+from db_push import gif_push, gst_hls_push
 
 Gst.init(None) # Initializes Gstreamer, it's variables, paths
 nc_client = NATS() # global Nats declaration
 
 # define constants and variables
 frame_skip = {}
+gif_batch = {}
 pipelines = []
 # device_details = []
 known_whitelist_faces = []
@@ -37,15 +41,31 @@ known_blacklist_id = []
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
+ipfs_url = os.getenv("ipfs")
 nats_urls = os.getenv("nats")
 nats_urls = ast.literal_eval(nats_urls)
+
+pg_url = os.getenv("pghost")
+pgdb = os.getenv("pgdb")
+pgport = os.getenv("pgport")
+pguser = os.getenv("pguser")
+pgpassword = os.getenv("pgpassword")
 
 # creation of directories for file storage
 hls_path = "./Hls_output"
 if os.path.exists(hls_path) is False:
     os.mkdir(hls_path)
     
+gif_path = "./Gif_output"
+if os.path.exists(gif_path) is False:
+    os.mkdir(gif_path)
+    
 obj_model = torch.hub.load('Detection', 'custom', path='./best_yolov5.pt', source='local',force_reload=True)
+
+# Establish a connection to the PostgreSQL database
+connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
+# Create a cursor object
+cursor=connection.cursor()
 
 def activity_trackCall(source, device_id, device_timestamp, device_data, datainfo, track_obj):
     # global only_vehicle_batch_cnt,veh_pub
@@ -64,22 +84,35 @@ def activity_trackCall(source, device_id, device_timestamp, device_data, datainf
         queue1,
         datainfo,
         obj_model,
-        track_obj
+        track_obj,
+        cursor
         )
 
-def numpy_creation(img_arr, device_id, device_timestamp, device_info, track_obj, skip_dict):
+def numpy_creation(img_arr, device_id, device_timestamp, device_info, track_obj, skip_dict, gif_dict):
         
         # print("DEVICE ID: ", device_id)
         # print("DEVICE URN: ", device_info['urn'])
         # print("DEVICE TIMESTAMP: ", device_timestamp)
         
         # if(skip_dict[device_id] > 100):
+        
+        # filename for gif
+    video_name_gif = gif_path + '/' + str(device_id)
+    if not os.path.exists(video_name_gif):
+        os.makedirs(video_name_gif, exist_ok=True)
+        
+    path = video_name_gif + '/' + 'camera.gif'
+        
+    if(skip_dict[device_id] < 30):
+        gif_dict[device_id].append(img_arr)
+    elif(skip_dict[device_id] == 31):
+        threading.Thread(target=gif_push,args=(connection, cursor, path, device_info, gif_dict[device_id]),).start()
             
         
-        if skip_dict[device_id] % 4 == 0:
-            datainfo = [known_whitelist_faces, known_blacklist_faces, known_whitelist_id, known_blacklist_id]
-            # activity_trackCall(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj)
-            threading.Thread(target=activity_trackCall,args=(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj,)).start()
+    if skip_dict[device_id] % 4 == 0:
+        datainfo = [known_whitelist_faces, known_blacklist_faces, known_whitelist_id, known_blacklist_id]
+        # activity_trackCall(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj)
+        threading.Thread(target=activity_trackCall,args=(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj,)).start()
 
 class PipelineWatcher:
     def __init__(self, pipelines):
@@ -142,7 +175,7 @@ class PipelineWatcher:
         pipeline.set_state(Gst.State.PLAYING)
         
     @staticmethod
-    def on_new_sample(appsink, deviceId, deviceInfo, trackObj, frameSkip): # to fetch frames from appsink
+    def on_new_sample(appsink, deviceId, deviceInfo, trackObj, frameSkip, gif_batch): # to fetch frames from appsink
         
         # print("Got a sample")
         sample = appsink.emit("pull-sample")
@@ -159,10 +192,10 @@ class PipelineWatcher:
         # print("DEVICE ID: ", deviceId, "FRAME SKIP: ", frameSkip)
         # print(f"Received frame with shape {nparray.shape}")
         datetime_ist = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
-        numpy_creation(img_arr=nparray, device_id=deviceId, device_timestamp=datetime_ist , device_info=deviceInfo, track_obj=trackObj, skip_dict=frameSkip)
+        numpy_creation(img_arr=nparray, device_id=deviceId, device_timestamp=datetime_ist , device_info=deviceInfo, track_obj=trackObj, skip_dict=frameSkip, gif_dict=gif_batch)
         return Gst.FlowReturn.OK
 
-def gst_launcher(device_data, frame_skip):
+def gst_launcher(device_data, frame_skip, gif_dict):
     
     print("Entering Framewise and HLS Stream")
     
@@ -189,7 +222,7 @@ def gst_launcher(device_data, frame_skip):
     # print(video_name_hls)
     
     if(ddns_name == None):
-        hostname = 'localhost'
+        hostname = 'hls.ckdr.co.in'
     else:
         hostname = ddns_name
     
@@ -228,7 +261,7 @@ def gst_launcher(device_data, frame_skip):
         
     pipeline.set_state(Gst.State.PLAYING)
     appsink = pipeline.get_by_name(f"g_sink_{device_id}")
-    appsink.connect("new-sample", PipelineWatcher.on_new_sample, device_id, device_data, track_obj, frame_skip)
+    appsink.connect("new-sample", PipelineWatcher.on_new_sample, device_id, device_data, track_obj, frame_skip, gif_dict)
     pipelines.append(pipeline)
     
 def run_pipeline(devices_for_process):
@@ -255,7 +288,9 @@ def run_pipeline(devices_for_process):
             'long': device_tuple[12]
         }
         frame_skip[device_dict['deviceId']] = 0
-        gst_launcher(device_dict, frame_skip)
+        gif_batch[device_dict['deviceId']] = []
+        gst_launcher(device_dict, frame_skip, gif_batch)
+        threading.Thread(target=gst_hls_push,args=(connection, cursor, device_dict),).start()
         
     GLib.MainLoop().run()
 

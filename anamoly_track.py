@@ -150,7 +150,7 @@ async def json_publish_activity(primary):
     print(f'Ack: stream={ack.stream}, sequence={ack.seq}')
     print("Activity is getting published")
 
-def process_publish(device_id,batch_data,device_data):
+def process_publish(device_id,batch_data,device_data,cursor):
     # print(device_id," ",batch_data)
     
     
@@ -188,7 +188,7 @@ def process_publish(device_id,batch_data,device_data):
             output_json["type"] = "anamoly"
             asyncio.run(json_publish_activity(primary=output_json))
             print(output_json)
-            dbpush_activities(output_json)
+            dbpush_activities(output_json, cursor)
             print("DB insert")
             
             with open("test.json", "a") as outfile:
@@ -198,7 +198,7 @@ def process_publish(device_id,batch_data,device_data):
         else:
             print("DB insert")
             print(output_json)
-            dbpush_activities(output_json)
+            dbpush_activities(output_json, cursor)
             with open("test.json", "a") as outfile:
                 # data = json.load(outfile)
                 # data.append(output_json)
@@ -214,6 +214,7 @@ def trackmain(
     datainfo,
     obj_model,
     track_obj,
+    cursor,
     device = 'cuda',
     conf = 0.5,
     classes = None,
@@ -304,7 +305,7 @@ def trackmain(
             # print("batch length of ",device_id,":",len(isolate_queue[each]))
             batch_data = isolate_queue[each]
             isolate_queue[each] = []
-            process_publish(device_id,batch_data,device_data)
+            process_publish(device_id,batch_data,device_data,cursor)
             # threading.Thread(target=process_publish,args = (device_id,batch_data,device_data)).start()
 
 

@@ -42,7 +42,7 @@ try:
 except (Exception, psycopg2.Error) as error:
     print("Error while fetching data from PostgreSQL", error)
 
-def dbpush_activities(act_out):
+def dbpush_activities(act_out, cursor):
     print("PUSHING THE CONTENTS TO DB")
     # try:
            
@@ -66,11 +66,12 @@ def dbpush_activities(act_out):
             INSERT INTO "Activities" (id, "tenantId", "batchId", "memberId", location, title, timestamp, score, "deviceId", "createdAt", "updatedAt")
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
             """,
-            ((str(act_uuid),), act_out['tenant_id'], act_out['batchid'], None, "Bangalore, India", title, act_out['timestamp'], 26.085652173913044, act_out['deviceid'])
+            ((str(act_uuid),), act_out['tenantId'], act_out['batchid'], None, "Bangalore, India", title, act_out['timestamp'], 26.085652173913044, act_out['deviceid'])
         )
 
         # Get the ID of the new Activity
-        activity_id = cursor.fetchone()['id']
+        result1 = cursor.fetchone()
+        activity_id = result1[0]
         
         print("ACTIVITY INSERTED: ", activity_id)
         
@@ -86,11 +87,12 @@ def dbpush_activities(act_out):
             INSERT INTO "Images" (id, name, "timeStamp", uri, "tenantId", "activityId", "thumbnailId", "logId", "createdAt", "updatedAt")
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
             """,
-            ((str(img_uuid),), img_name, act_out['timestamp'], act_out['metaData']['cid'], act_out['tenant_id'], activity_id, None, None)
+            ((str(img_uuid),), img_name, act_out['timestamp'], act_out['metaData']['cid'], act_out['tenantId'], activity_id, None, None)
         )  
         
         # Get the ID of the new Activity
-        imgAct_id = cursor.fetchone()['id']
+        result2 = cursor.fetchone()
+        imgAct_id = result2[0]
         
         print("IMAGE ACTIVITY DATA INSERTED: ", imgAct_id)
         
@@ -114,7 +116,8 @@ def dbpush_activities(act_out):
                 )
                 
                 # Get the ID of the new Activity
-                actMeta_id = cursor.fetchone()['id']
+                result3 = cursor.fetchone()
+                actMeta_id = result3[0]
                 
                 print("ACTIVITY META DATA INSERTED: ", actMeta_id)
                 
@@ -137,7 +140,8 @@ def dbpush_activities(act_out):
                 )
                 
                 # Get the ID of the new Activity
-                geo_id = cursor.fetchone()['id']
+                result4 = cursor.fetchone()
+                geo_id = result4[0]
                 
                 print("GEO DATA INSERTED: ", geo_id)
                 
@@ -180,11 +184,12 @@ def dbpush_activities(act_out):
                             INSERT INTO "Logs" (id, "tenantId", "_id", class, track, activity, cid, "memberId", "activityId", "createdAt", "updatedAt")
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
                             """,
-                            ((str(log_uuid),), act_out['tenant_id'], item["id"], item["class"], item["track"], (item["activity"])[0], item["cids"], member_id, activity_id)
+                            ((str(log_uuid),), act_out['tenantId'], item["id"], item["class"], item["track"], (item["activity"])[0], item["cids"], member_id, activity_id)
                         )
                         
                         # Get the ID of the new Activity
-                        log_id = cursor.fetchone()['id']
+                        result5 = cursor.fetchone()
+                        log_id = result5[0]
                         
                         print("ACTIVITY LOG DATA INSERTED: ", log_id) 
                         
@@ -193,18 +198,19 @@ def dbpush_activities(act_out):
                         
                         img_timestamp = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
                         
-                        img_name = f"ACTIVITY_{img_timestamp}"
+                        img_name = f"LOG_{img_timestamp}"
                         
                         # Create a new Image
                         cursor.execute("""
                             INSERT INTO "Images" (id, name, "timeStamp", uri, "tenantId", "activityId", "thumbnailId", "logId", "createdAt", "updatedAt")
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
                             """,
-                            ((str(img_uuid),), img_name, item["detectTime"], item["cids"], act_out['tenant_id'], None, None, log_id)
+                            ((str(img_uuid),), img_name, item["detectTime"], item["cids"], act_out['tenantId'], None, None, log_id)
                         )  
                         
                         # Get the ID of the new Activity
-                        imgLog_id = cursor.fetchone()['id']
+                        result6 = cursor.fetchone()
+                        imgLog_id = result6[0]
                         
                         print("IMAGE LOG DATA INSERTED: ", imgLog_id)
 
