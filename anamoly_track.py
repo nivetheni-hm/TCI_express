@@ -163,7 +163,7 @@ def process_publish(device_id,batch_data,device_data):
     
     # print(output_json)
     batchId = str(uuid.uuid4())
-    output_json["tenant_id"] = device_data['tenantId']
+    output_json["tenantId"] = device_data['tenantId']
     output_json["batchid"] = batchId
     output_json["deviceid"] = device_id
     output_json["timestamp"] = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
@@ -221,7 +221,7 @@ def trackmain(
     iou = 0.4
 ):
     
-    print("Starting the detection and tracking")
+    # print(device_id)
 
     global frame_cnt
 
@@ -296,15 +296,16 @@ def trackmain(
         # print("entering else")
         isolate_queue[device_id] = []
         isolate_queue[device_id].append(final_frame)
-        
-    # print([{each:len(isolate_queue[each])} for each in isolate_queue])
+    print(len([{each:len(isolate_queue[each])} for each in isolate_queue]))
+    print([{each:len(isolate_queue[each])} for each in isolate_queue])
     for each in isolate_queue:
         
         if len(isolate_queue[each])>29:
             # print("batch length of ",device_id,":",len(isolate_queue[each]))
             batch_data = isolate_queue[each]
             isolate_queue[each] = []
-            threading.Thread(target=process_publish,args = (device_id,batch_data,device_data)).start()
+            process_publish(device_id,batch_data,device_data)
+            # threading.Thread(target=process_publish,args = (device_id,batch_data,device_data)).start()
 
 
         # for i, (im, pred) in enumerate(zip(yolo_preds.ims, yolo_preds.pred)):
