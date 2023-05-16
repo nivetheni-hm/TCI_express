@@ -48,7 +48,7 @@ import os, shutil
 
 from multiprocessing import Process
 
-from person_type import find_person_type
+from person_type_new import find_person_type
 from try_anamoly import anamoly_score_calculator, frame_weighted_avg
 from project_1_update_ import output_func
 from db_test import dbpush_activities
@@ -150,7 +150,27 @@ async def json_publish_activity(primary):
     print(f'Ack: stream={ack.stream}, sequence={ack.seq}')
     print("Activity is getting published")
 
-def process_publish(device_id,batch_data,device_data,cursor):
+def cid_to_image(cid,device_id):
+    #'ipfs --api={ipfs_url} add {file_path} -Q'.format(ipfs_url=ipfs_url, file_path=src_file)
+    command = 'ipfs --api={ipfs_url} get {cid}'.format(ipfs_url=ipfs_url,cid=cid)
+    output = sp.getoutput(command)
+    image_path = "./"+str(device_id)+"/"+str(cid)+".jpg"
+    os.rename(cid, image_path)
+    return image_path
+
+def face_recognition_process(output_json,datainfo,device_id,cursor):
+    for detection in output_json['metaData']['object']:
+        image_path = cid_to_image(detection['cids'],device_id)
+        crop_image = cv2.imread(image_path)
+        did, track_type = find_person_type(crop_image,datainfo)
+        detection["track"] = track_type
+        detection['memDID'] = did
+    dbpush_activities(output_json, cursor)
+
+
+
+
+def process_publish(device_id,batch_data,device_data,cursor,datainfo):
     # print(device_id," ",batch_data)
     
     
@@ -159,7 +179,7 @@ def process_publish(device_id,batch_data,device_data,cursor):
         each["frame_id"] = i+1
     # print(batch_data)
 
-    output_json = output_func(batch_data)
+    output_json = output_func(batch_data,device_id)
     
     # print(output_json)
     batchId = str(uuid.uuid4())
@@ -186,10 +206,13 @@ def process_publish(device_id,batch_data,device_data,cursor):
         # for each in output_json['metaData']['object']:
         if len([True for each in [each["activity"] for each in output_json['metaData']['object']] if each in anamoly])>0:
             output_json["type"] = "anamoly"
-            asyncio.run(json_publish_activity(primary=output_json))
+            
             print(output_json)
             dbpush_activities(output_json, cursor)
+            asyncio.run(json_publish_activity(primary=output_json))
             print("DB insert")
+            face_recognition_process(output_json,datainfo,device_id,cursor)
+            
             
             with open("test.json", "a") as outfile:
                 # data = json.load(outfile)
@@ -299,13 +322,14 @@ def trackmain(
         isolate_queue[device_id].append(final_frame)
     print(len([{each:len(isolate_queue[each])} for each in isolate_queue]))
     print([{each:len(isolate_queue[each])} for each in isolate_queue])
+    
     for each in isolate_queue:
         
         if len(isolate_queue[each])>29:
             # print("batch length of ",device_id,":",len(isolate_queue[each]))
             batch_data = isolate_queue[each]
             isolate_queue[each] = []
-            process_publish(device_id,batch_data,device_data,cursor)
+            process_publish(device_id,batch_data,device_data,cursor,datainfo)
             # threading.Thread(target=process_publish,args = (device_id,batch_data,device_data)).start()
 
 
