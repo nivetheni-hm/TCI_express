@@ -1,0 +1,11 @@
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-MEDIA-SEQUENCE:4
+#EXT-X-TARGETDURATION:15
+
+#EXTINF:10.01305103302002,
+https://hls.ckdr.co.in/live/stream9238ebb4-0737-453a-9263-4aaf5f4e505a/segment.3.ts
+#EXTINF:14.535391807556152,
+https://hls.ckdr.co.in/live/stream9238ebb4-0737-453a-9263-4aaf5f4e505a/segment.4.ts
+#EXTINF:10.223204612731934,
+https://hls.ckdr.co.in/live/stream9238ebb4-0737-453a-9263-4aaf5f4e505a/segment.5.ts

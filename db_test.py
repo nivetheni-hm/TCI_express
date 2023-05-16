@@ -31,20 +31,19 @@ pgpassword=''
 
 ack = False
 
-try:
-    # Establish a connection to the PostgreSQL database
-    connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
-    # connection = psycopg2.connect(host='216.48.182.5', database='postgres',port='5432',user='postgres',password='Happy@123')
-
-    # Create a cursor object
-    cursor=connection.cursor(cursor_factory=RealDictCursor)
-    
-except (Exception, psycopg2.Error) as error:
-    print("Error while fetching data from PostgreSQL", error)
-
-def dbpush_activities(act_out, cursor):
+def dbpush_activities(act_out):
     print("PUSHING THE CONTENTS TO DB")
     # try:
+    try:
+        # Establish a connection to the PostgreSQL database
+        connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
+        # connection = psycopg2.connect(host='216.48.182.5', database='postgres',port='5432',user='postgres',password='Happy@123')
+
+        # Create a cursor object
+        cursor=connection.cursor(cursor_factory=RealDictCursor)
+        
+    except (Exception, psycopg2.Error) as error:
+        print("Error while fetching data from PostgreSQL", error)
            
     if act_out is not None:
         

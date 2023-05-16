@@ -14,46 +14,70 @@ load_dotenv(dotenv_path)
 
 ipfs_url = os.getenv("ipfs")
 
-def gst_hls_push(connection, cursor, deviceInfo):
-    
-    device_id = deviceInfo['deviceId']
-    ddns_name = deviceInfo['ddns']
-    if(ddns_name == None):
-        hostname = 'hls.ckdr.co.in'
-    else:
-        hostname = ddns_name
-        
-    hls_url = f'https://{hostname}/live/stream{device_id}/{device_id}.m3u8'        
-    # Define the update statement
-    query='''UPDATE "DeviceMetaData" SET uri=%s WHERE "deviceId"=%s;'''
-        
-    try:        
-        # Execute the update statement with the specified values
-        cursor.execute(query, (hls_url, device_id))           
-        connection.commit()        
-        print("Updated the uri column in device table")
-    except psycopg2.errors.SerializationFailure as e:
-        # If the transaction encounters a serialization failure, retry with exponential backoff
-        print(f"Transaction serialization failure: {e}")
-        max_retries = 5
-        delay = 0.2
-        retry_count = 0
-        while retry_count < max_retries:
-            print(f"Retrying transaction after {delay} seconds...")
-            time.sleep(delay)
-            try:
-                # Execute the update statement with the specified values
-                cursor.execute(query, (hls_url, device_id))
-                connection.commit()
-                print("Transaction succeeded on retry")
-                return
-            except psycopg2.errors.SerializationFailure as e:
-                print(f"Transaction serialization failure: {e}")
-                delay *= 2
-                retry_count += 1
-        print("Transaction failed after maximum retries")
+pg_url = os.getenv("pghost")
+pgdb = os.getenv("pgdb")
+pgport = os.getenv("pgport")
+pguser = os.getenv("pguser")
+pgpassword = os.getenv("pgpassword")
 
-def gif_push(connection, cursor, file_path, device_info, gifBatch):
+def gst_hls_push(deviceInfo):
+    
+    for item in deviceInfo:
+        
+        device_id = item['deviceId']
+        ddns_name = item['ddns']
+        if(ddns_name == None):
+            hostname = 'hls.ckdr.co.in'
+        else:
+            hostname = ddns_name
+            
+        hls_url = f'https://{hostname}/live/stream{device_id}/{device_id}.m3u8'        
+        # Define the update statement
+        query='''UPDATE "DeviceMetaData" SET uri=%s WHERE "deviceId"=%s;'''
+            
+        try:
+            # Establish a connection to the PostgreSQL database
+            connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
+            # Create a cursor object
+            cursor=connection.cursor()     
+            # Execute the update statement with the specified values
+            cursor.execute(query, (hls_url, device_id))           
+            connection.commit()        
+            print("Updated the uri column in device table")
+        except psycopg2.errors.SerializationFailure as e:
+            # If the transaction encounters a serialization failure, retry with exponential backoff
+            print(f"Transaction serialization failure: {e}")
+            connection.rollback()
+            max_retries = 5
+            delay = 0.2
+            retry_count = 0
+            while retry_count < max_retries:
+                print(f"Retrying transaction after {delay} seconds...")
+                time.sleep(delay)
+                try:
+                    # Execute the update statement with the specified values
+                    cursor.execute(query, (hls_url, device_id))
+                    connection.commit()
+                    print("Transaction succeeded on retry")
+                    return
+                except psycopg2.errors.SerializationFailure as e:
+                    print(f"Transaction serialization failure: {e}")
+                    connection.rollback()
+                    delay *= 2
+                    retry_count += 1
+                except Exception as e:
+                    print("Postges error occured: ", e)
+                    connection.rollback()
+                    return
+            print("Transaction failed after maximum retries")
+        
+        except Exception as e:
+            print("Postges error occured: ", e)
+            connection.rollback()
+            return
+        time.sleep(15)
+
+def gif_push(file_path, device_info, gifBatch):
     
     deviceId = device_info['deviceId']
     tenantId = device_info['tenantId']
@@ -63,8 +87,7 @@ def gif_push(connection, cursor, file_path, device_info, gifBatch):
         for idx, frame in enumerate(gifBatch):
             print("FRAME: ", idx)
             writer.append_data(frame)
-            
-    print("PATH:", file_path)
+
     command = f'ipfs --api={ipfs_url} add {file_path} -Q'
     gif_cid = sp.getoutput(command)
     print("GIF CID: ", gif_cid)
@@ -82,7 +105,11 @@ def gif_push(connection, cursor, file_path, device_info, gifBatch):
         INSERT INTO "Images" (id, name, "timeStamp", uri, "tenantId", "activityId", "thumbnailId", "logId", "createdAt", "updatedAt")
         VALUES (uuid_generate_v4(), %s, %s, %s, %s, %s, (SELECT id FROM inserted_thumbnail), %s, now(), now());
         """       
-    try:        
+    try:
+        # Establish a connection to the PostgreSQL database
+        connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
+        # Create a cursor object
+        cursor=connection.cursor()       
         # Execute the update statement with the specified values
         cursor.execute(query, (img_name, img_timestamp, deviceId, img_name, img_timestamp, str(gif_cid), tenantId, None, None))           
         connection.commit()        
@@ -90,6 +117,7 @@ def gif_push(connection, cursor, file_path, device_info, gifBatch):
     except psycopg2.errors.SerializationFailure as e:
         # If the transaction encounters a serialization failure, retry with exponential backoff
         print(f"Transaction serialization failure: {e}")
+        connection.rollback()
         max_retries = 5
         delay = 0.2
         retry_count = 0
@@ -104,9 +132,18 @@ def gif_push(connection, cursor, file_path, device_info, gifBatch):
                 return
             except psycopg2.errors.SerializationFailure as e:
                 print(f"Transaction serialization failure: {e}")
+                connection.rollback()
                 delay *= 2
                 retry_count += 1
-                
-    except psycopg2.errors.ForeignKeyViolation as e:
-        pass
-        print("Transaction failed after maximum retries")
+            except Exception as e:
+                print("Postges error occured: ", e)
+                connection.rollback()
+                return
+            print("Transaction failed after maximum retries")
+        
+    except Exception as e:
+        print("Postges error occured: ", e)
+        connection.rollback()
+        return
+    
+    time.sleep(15)

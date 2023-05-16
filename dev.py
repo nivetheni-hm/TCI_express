@@ -1157,9 +1157,9 @@ device_details = [
   '0.0.0.1',
   1234.0,
   'H264',
-  'happymonk',
+  'test',
   'rtsp://test:test123456789@streams.ckdr.co.in:2554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif',
-  'admin123',
+  'test123456789',
   [
     'Tracking',
     'Disabled',
