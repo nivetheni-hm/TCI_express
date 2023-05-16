@@ -31,20 +31,19 @@ pgpassword=''
 
 ack = False
 
-try:
-    # Establish a connection to the PostgreSQL database
-    connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
-    # connection = psycopg2.connect(host='216.48.182.5', database='postgres',port='5432',user='postgres',password='Happy@123')
-
-    # Create a cursor object
-    cursor=connection.cursor(cursor_factory=RealDictCursor)
-    
-except (Exception, psycopg2.Error) as error:
-    print("Error while fetching data from PostgreSQL", error)
-
 def dbpush_activities(act_out):
     print("PUSHING THE CONTENTS TO DB")
     # try:
+    try:
+        # Establish a connection to the PostgreSQL database
+        connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
+        # connection = psycopg2.connect(host='216.48.182.5', database='postgres',port='5432',user='postgres',password='Happy@123')
+
+        # Create a cursor object
+        cursor=connection.cursor(cursor_factory=RealDictCursor)
+        
+    except (Exception, psycopg2.Error) as error:
+        print("Error while fetching data from PostgreSQL", error)
            
     if act_out is not None:
         
@@ -66,7 +65,7 @@ def dbpush_activities(act_out):
             INSERT INTO "Activities" (id, "tenantId", "batchId", "memberId", location, title, timestamp, score, "deviceId", "createdAt", "updatedAt")
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
             """,
-            ((str(act_uuid),), act_out['tenant_id'], act_out['batchid'], None, "Bangalore, India", title, act_out['timestamp'], 26.085652173913044, act_out['deviceid'])
+            ((str(act_uuid),), act_out['tenantId'], act_out['batchid'], None, "Bangalore, India", title, act_out['timestamp'], 26.085652173913044, act_out['deviceid'])
         )
 
         # Get the ID of the new Activity
@@ -87,7 +86,7 @@ def dbpush_activities(act_out):
             INSERT INTO "Images" (id, name, "timeStamp", uri, "tenantId", "activityId", "thumbnailId", "logId", "createdAt", "updatedAt")
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
             """,
-            ((str(img_uuid),), img_name, act_out['timestamp'], act_out['metaData']['cid'], act_out['tenant_id'], activity_id, None, None)
+            ((str(img_uuid),), img_name, act_out['timestamp'], act_out['metaData']['cid'], act_out['tenantId'], activity_id, None, None)
         )  
         
         # Get the ID of the new Activity
@@ -184,7 +183,7 @@ def dbpush_activities(act_out):
                             INSERT INTO "Logs" (id, "tenantId", "_id", class, track, activity, cid, "memberId", "activityId", "createdAt", "updatedAt")
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
                             """,
-                            ((str(log_uuid),), act_out['tenant_id'], item["id"], item["class"], item["track"], (item["activity"])[0], item["cids"], member_id, activity_id)
+                            ((str(log_uuid),), act_out['tenantId'], item["id"], item["class"], item["track"], (item["activity"])[0], item["cids"], member_id, activity_id)
                         )
                         
                         # Get the ID of the new Activity
@@ -205,7 +204,7 @@ def dbpush_activities(act_out):
                             INSERT INTO "Images" (id, name, "timeStamp", uri, "tenantId", "activityId", "thumbnailId", "logId", "createdAt", "updatedAt")
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id;
                             """,
-                            ((str(img_uuid),), img_name, item["detectTime"], item["cids"], act_out['tenant_id'], None, None, log_id)
+                            ((str(img_uuid),), img_name, item["detectTime"], item["cids"], act_out['tenantId'], None, None, log_id)
                         )  
                         
                         # Get the ID of the new Activity

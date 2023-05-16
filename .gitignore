@@ -2,5 +2,10 @@
 ./cid_ref.jpg
 ./__pycache__
 ./0
+<<<<<<< HEAD
+=======
+./Hls_output
+./Gif_output
+>>>>>>> a1d5e187574217f26ba933e1b28361f8d50ddc1d
 ./yolo_slowfast
 ./nohup.out

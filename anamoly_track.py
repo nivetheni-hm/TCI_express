@@ -35,7 +35,7 @@ from pytorchvideo.transforms.functional import (
 from torchvision.transforms._functional_video import normalize
 from Detection.utils.plots import Annotator, colors, save_one_box
 
-from person_type import find_person_type
+from person_type_new import find_person_type
 from try_anamoly import anamoly_score_calculator, frame_weighted_avg
 from project_1_update_ import output_func
 from db_test import dbpush_activities
@@ -138,7 +138,27 @@ async def json_publish_activity(primary):
     print(f'Ack: stream={ack.stream}, sequence={ack.seq}')
     print("Activity is getting published")
 
-def process_publish(device_id, batch_data, device_data):
+def cid_to_image(cid,device_id):
+    #'ipfs --api={ipfs_url} add {file_path} -Q'.format(ipfs_url=ipfs_url, file_path=src_file)
+    command = 'ipfs --api={ipfs_url} get {cid}'.format(ipfs_url=ipfs_url,cid=cid)
+    output = sp.getoutput(command)
+    image_path = "./"+str(device_id)+"/"+str(cid)+".jpg"
+    os.rename(cid, image_path)
+    return image_path
+
+def face_recognition_process(output_json,datainfo,device_id):
+    for detection in output_json['metaData']['object']:
+        image_path = cid_to_image(detection['cids'],device_id)
+        crop_image = cv2.imread(image_path)
+        did, track_type = find_person_type(crop_image,datainfo)
+        detection["track"] = track_type
+        detection['memDID'] = did
+    dbpush_activities(output_json)
+
+
+
+
+def process_publish(device_id,batch_data,device_data,datainfo):
     # print(device_id," ",batch_data)
     
     
@@ -147,11 +167,11 @@ def process_publish(device_id, batch_data, device_data):
         each["frame_id"] = i+1
     # print(batch_data)
 
-    output_json = output_func(batch_data)
+    output_json = output_func(batch_data,device_id)
     
     # print(output_json)
     batchId = str(uuid.uuid4())
-    output_json["tenant_id"] = device_data['tenantId']
+    output_json["tenantId"] = device_data['tenantId']
     output_json["batchid"] = batchId
     output_json["deviceid"] = device_id
     output_json["timestamp"] = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
@@ -174,10 +194,13 @@ def process_publish(device_id, batch_data, device_data):
         # for each in output_json['metaData']['object']:
         if len([True for each in [each["activity"] for each in output_json['metaData']['object']] if each in anamoly])>0:
             output_json["type"] = "anamoly"
-            asyncio.run(json_publish_activity(primary=output_json))
+            
             print(output_json)
-            threading.Thread(target=dbpush_activities,args=(output_json)).start()
+            dbpush_activities(output_json)
+            asyncio.run(json_publish_activity(primary=output_json))
             print("DB insert")
+            face_recognition_process(output_json,datainfo,device_id)
+            
             
             with open("test.json", "a") as outfile:
                 # data = json.load(outfile)
@@ -186,7 +209,7 @@ def process_publish(device_id, batch_data, device_data):
         else:
             print("DB insert")
             print(output_json)
-            threading.Thread(target=dbpush_activities,args=(output_json)).start()
+            dbpush_activities(output_json)
             with open("test.json", "a") as outfile:
                 # data = json.load(outfile)
                 # data.append(output_json)
@@ -208,7 +231,7 @@ def trackmain(
     iou = 0.4
 ):
     
-    print("Starting the detection and tracking")
+    # print(device_id)
 
     global frame_cnt
 
@@ -283,15 +306,17 @@ def trackmain(
         # print("entering else")
         isolate_queue[device_id] = []
         isolate_queue[device_id].append(final_frame)
-        
-    # print([{each:len(isolate_queue[each])} for each in isolate_queue])
+    print(len([{each:len(isolate_queue[each])} for each in isolate_queue]))
+    print([{each:len(isolate_queue[each])} for each in isolate_queue])
+    
     for each in isolate_queue:
         
         if len(isolate_queue[each])>29:
             # print("batch length of ",device_id,":",len(isolate_queue[each]))
             batch_data = isolate_queue[each]
             isolate_queue[each] = []
-            threading.Thread(target=process_publish,args = (device_id, batch_data, device_data)).start()
+            process_publish(device_id,batch_data,device_data,datainfo)
+            # threading.Thread(target=process_publish,args = (device_id,batch_data,device_data)).start()
 
 
         # for i, (im, pred) in enumerate(zip(yolo_preds.ims, yolo_preds.pred)):

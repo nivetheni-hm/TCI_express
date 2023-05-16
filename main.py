@@ -16,9 +16,8 @@ import multiprocessing
 from multiprocessing import Process, Queue, Pool
 import uuid
 import threading
-import cv2
 import psycopg2
-import time
+import shutil
 
 # importing required functions
 from db_fetch import fetch_db #to fetch data from postgres
@@ -26,6 +25,9 @@ from yolo_slowfast.deep_sort.deep_sort import DeepSort # import Deepsort trackin
 from anamoly_track import trackmain # model inference part
 from dev import device_details
 from db_push import gif_push, gst_hls_push
+from lmdb_list_gen import attendance_lmdb_known, attendance_lmdb_unknown
+from db_fetch_members import fetch_db_mem
+from facedatainsert_lmdb import add_member_to_lmdb
 
 Gst.init(None) # Initializes Gstreamer, it's variables, paths
 nc_client = NATS() # global Nats declaration
@@ -68,7 +70,6 @@ obj_model = torch.hub.load('Detection', 'custom', path='./best_yolov5.pt', sourc
 connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
 # Create a cursor object
 cursor=connection.cursor()
-        
 def activity_trackCall(source, device_id, device_timestamp, device_data, datainfo, track_obj):
 
     queue1 = Queue()
@@ -88,7 +89,11 @@ def activity_trackCall(source, device_id, device_timestamp, device_data, datainf
 
 def numpy_creation(img_arr, device_id, device_timestamp, device_info, track_obj, skip_dict, gif_dict):
         
-    # filename for gif
+    path = video_name_gif + '/' + 'camera.gif'
+        
+        # if(skip_dict[device_id] > 100):
+        
+        # filename for gif
     video_name_gif = gif_path + '/' + str(device_id)
     if not os.path.exists(video_name_gif):
         os.makedirs(video_name_gif, exist_ok=True)
@@ -99,6 +104,7 @@ def numpy_creation(img_arr, device_id, device_timestamp, device_info, track_obj,
         gif_dict[device_id].append(img_arr)
     elif(skip_dict[device_id] == 31):
         threading.Thread(target=gif_push,args=(connection, cursor, path, device_info, gif_dict[device_id]),).start()
+            
         
     if skip_dict[device_id] % 4 == 0:
         datainfo = [known_whitelist_faces, known_blacklist_faces, known_whitelist_id, known_blacklist_id]
@@ -194,7 +200,7 @@ class PipelineWatcher:
         numpy_creation(img_arr=nparray, device_id=deviceId, device_timestamp=datetime_ist , device_info=deviceInfo, track_obj=trackObj, skip_dict=frameSkip, gif_dict=gif_batch)
         return Gst.FlowReturn.OK
 
-def gst_launcher(device_data, frame_skip, gif_batch):
+def gst_launcher(device_data, frame_skip, gif_dict):
     
     print("Entering Framewise and HLS Stream")
     
@@ -262,7 +268,7 @@ def gst_launcher(device_data, frame_skip, gif_batch):
         
     pipeline.set_state(Gst.State.PLAYING)
     appsink = pipeline.get_by_name(f"g_sink_{device_id}")
-    appsink.connect("new-sample", PipelineWatcher.on_new_sample, device_id, device_data, track_obj, frame_skip, gif_batch)
+    appsink.connect("new-sample", PipelineWatcher.on_new_sample, device_id, device_data, track_obj, frame_skip, gif_dict)
     pipelines.append(pipeline)
     
 def run_pipeline(devices_for_process):
@@ -291,7 +297,8 @@ def run_pipeline(devices_for_process):
         frame_skip[device_dict['deviceId']] = 0
         gif_batch[device_dict['deviceId']] = []
         gst_launcher(device_dict, frame_skip, gif_batch)
-        # threading.Thread(target=gst_hls_push,args=(connection, cursor, device_dict),).start()
+        threading.Thread(target=gst_hls_push,args=(connection, cursor, device_dict),).start()
+        
     GLib.MainLoop().run()
 
 def call_gstreamer(device_details): # iterate through the device list and start the gstreamer pipeline
@@ -312,12 +319,98 @@ def call_gstreamer(device_details): # iterate through the device list and start 
         # Start a new process for this batch of devices
         process = multiprocessing.Process(target=run_pipeline, args=(devices_for_process,))
         process.start()
+
+def remove_cnts(folder):
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+def load_lmdb_list():
+    known_whitelist_faces1, known_whitelist_id1 = attendance_lmdb_known()
+    known_blacklist_faces1, known_blacklist_id1 = attendance_lmdb_unknown()
     
+    global known_whitelist_faces
+    known_whitelist_faces = known_whitelist_faces1
+
+    global known_whitelist_id
+    known_whitelist_id = known_whitelist_id1
+    
+    global known_blacklist_faces
+    known_blacklist_faces = known_blacklist_faces1
+
+    global known_blacklist_id
+    known_blacklist_id = known_blacklist_id1
+    print("-------------------------------------------------------------------------")
+    print("-------------------------------------------------------------------------")
+    print("-------------------------------------------------------------------------")
+    print(len(known_whitelist_faces), len(known_blacklist_faces))
+    print("-------------------------------------------------------------------------")
+    print("-------------------------------------------------------------------------")
+    print("-------------------------------------------------------------------------")
+
+def gen_datainfo():
+    remove_cnts("./lmdb")
+    load_lmdb_list()
+    print("removed lmdb contents")
+    mem_data = fetch_db_mem()
+    for i,data in enumerate(mem_data):
+        data['member'][0]['type'] = "known"
+        if i == 1:
+            break
+    print("mem_data",mem_data)
+    
+    load_lmdb_fst(mem_data)
+    known_whitelist_faces1, known_whitelist_id1 = attendance_lmdb_known()
+    known_blacklist_faces1, known_blacklist_id1 = attendance_lmdb_unknown()
+    
+    global known_whitelist_faces
+    known_whitelist_faces = known_whitelist_faces1
+
+    global known_whitelist_id
+    known_whitelist_id = known_whitelist_id1
+    
+    global known_blacklist_faces
+    known_blacklist_faces = known_blacklist_faces1
+
+    global known_blacklist_id
+    known_blacklist_id = known_blacklist_id1
+    return [known_whitelist_faces,known_blacklist_faces,known_whitelist_id,known_blacklist_id]
+def load_lmdb_fst(mem_data):
+    i = 0
+    for each in mem_data:
+        i = i+1
+        add_member_to_lmdb(each)
+        print("inserting ",each)
+
 async def main():
     global device_details
-    # fetch device details
+    remove_cnts("./lmdb")
+    load_lmdb_list()
+    print("removed lmdb contents")
+    mem_data = fetch_db_mem()
+    # print(mem_data)
+    
+    load_lmdb_fst(mem_data)
+    load_lmdb_list()
+
     # device_details = fetch_db()
-    call_gstreamer(device_details)
+    # print(device_details)
+    temp_devs = []
+    for i,each in enumerate(device_details):
+
+        temp_devs.append(each)
+        if i == 5: 
+            break
+            
+    print(temp_devs)
+    call_gstreamer(temp_devs)
+
 
 
 if __name__ == '__main__':
