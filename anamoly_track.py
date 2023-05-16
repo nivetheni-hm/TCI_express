@@ -12,9 +12,18 @@ import nats, json
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # yolov5 strongsort root directory
 import sys
-from nanoid import generate
 import threading
-
+import cv2
+import numpy as np
+import os
+from pytz import timezone 
+import subprocess as sp
+#.env vars loaded
+import os
+from os.path import join, dirname
+from dotenv import load_dotenv
+import ast
+import os, shutil
 
 if str(ROOT / 'Detection') not in sys.path:
     sys.path.append(str(ROOT / 'Detection'))
@@ -26,32 +35,12 @@ from pytorchvideo.transforms.functional import (
 from torchvision.transforms._functional_video import normalize
 from Detection.utils.plots import Annotator, colors, save_one_box
 
-
-import cv2
-import numpy as np
-import os
-from pytz import timezone 
-import subprocess as sp
-# from try_anamoly import anamoly_score_calculator, frame_weighted_avg
-# from person_type import find_person_type
-path = os.getcwd()
-
-
-
-#.env vars loaded
-import os
-from os.path import join, dirname
-from dotenv import load_dotenv
-import ast
-import gc
-import os, shutil
-
-from multiprocessing import Process
-
 from person_type import find_person_type
 from try_anamoly import anamoly_score_calculator, frame_weighted_avg
 from project_1_update_ import output_func
 from db_test import dbpush_activities
+
+path = os.getcwd()
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -65,7 +54,6 @@ pgdb = os.getenv("pgdb")
 pgport = os.getenv("pgport")
 pguser = os.getenv("pguser")
 pgpassword = os.getenv("pgpassword")
-
 
 isolate_queue = {}
 frame_cnt = 0
@@ -150,7 +138,7 @@ async def json_publish_activity(primary):
     print(f'Ack: stream={ack.stream}, sequence={ack.seq}')
     print("Activity is getting published")
 
-def process_publish(device_id,batch_data,device_data):
+def process_publish(device_id, batch_data, device_data):
     # print(device_id," ",batch_data)
     
     
@@ -188,7 +176,7 @@ def process_publish(device_id,batch_data,device_data):
             output_json["type"] = "anamoly"
             asyncio.run(json_publish_activity(primary=output_json))
             print(output_json)
-            dbpush_activities(output_json)
+            threading.Thread(target=dbpush_activities,args=(output_json)).start()
             print("DB insert")
             
             with open("test.json", "a") as outfile:
@@ -198,7 +186,7 @@ def process_publish(device_id,batch_data,device_data):
         else:
             print("DB insert")
             print(output_json)
-            dbpush_activities(output_json)
+            threading.Thread(target=dbpush_activities,args=(output_json)).start()
             with open("test.json", "a") as outfile:
                 # data = json.load(outfile)
                 # data.append(output_json)
@@ -210,7 +198,6 @@ def trackmain(
     device_data,
     device_id ,
     batchId,
-    queue1,
     datainfo,
     obj_model,
     track_obj,
@@ -304,7 +291,7 @@ def trackmain(
             # print("batch length of ",device_id,":",len(isolate_queue[each]))
             batch_data = isolate_queue[each]
             isolate_queue[each] = []
-            threading.Thread(target=process_publish,args = (device_id,batch_data,device_data)).start()
+            threading.Thread(target=process_publish,args = (device_id, batch_data, device_data)).start()
 
 
         # for i, (im, pred) in enumerate(zip(yolo_preds.ims, yolo_preds.pred)):

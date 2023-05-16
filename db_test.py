@@ -70,7 +70,8 @@ def dbpush_activities(act_out):
         )
 
         # Get the ID of the new Activity
-        activity_id = cursor.fetchone()['id']
+        result1 = cursor.fetchone()
+        activity_id = result1[0]
         
         print("ACTIVITY INSERTED: ", activity_id)
         
@@ -90,7 +91,8 @@ def dbpush_activities(act_out):
         )  
         
         # Get the ID of the new Activity
-        imgAct_id = cursor.fetchone()['id']
+        result2 = cursor.fetchone()
+        imgAct_id = result2[0]
         
         print("IMAGE ACTIVITY DATA INSERTED: ", imgAct_id)
         
@@ -114,7 +116,8 @@ def dbpush_activities(act_out):
                 )
                 
                 # Get the ID of the new Activity
-                actMeta_id = cursor.fetchone()['id']
+                result3 = cursor.fetchone()
+                actMeta_id = result3[0]
                 
                 print("ACTIVITY META DATA INSERTED: ", actMeta_id)
                 
@@ -137,7 +140,8 @@ def dbpush_activities(act_out):
                 )
                 
                 # Get the ID of the new Activity
-                geo_id = cursor.fetchone()['id']
+                result4 = cursor.fetchone()
+                geo_id = result4[0]
                 
                 print("GEO DATA INSERTED: ", geo_id)
                 
@@ -184,7 +188,8 @@ def dbpush_activities(act_out):
                         )
                         
                         # Get the ID of the new Activity
-                        log_id = cursor.fetchone()['id']
+                        result5 = cursor.fetchone()
+                        log_id = result5[0]
                         
                         print("ACTIVITY LOG DATA INSERTED: ", log_id) 
                         
@@ -193,7 +198,7 @@ def dbpush_activities(act_out):
                         
                         img_timestamp = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
                         
-                        img_name = f"ACTIVITY_{img_timestamp}"
+                        img_name = f"LOG_{img_timestamp}"
                         
                         # Create a new Image
                         cursor.execute("""
@@ -204,7 +209,8 @@ def dbpush_activities(act_out):
                         )  
                         
                         # Get the ID of the new Activity
-                        imgLog_id = cursor.fetchone()['id']
+                        result6 = cursor.fetchone()
+                        imgLog_id = result6[0]
                         
                         print("IMAGE LOG DATA INSERTED: ", imgLog_id)
 

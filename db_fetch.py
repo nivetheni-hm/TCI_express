@@ -11,8 +11,6 @@ dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 ipfs_url = os.getenv("ipfs")
-nats_urls = os.getenv("nats")
-nats_urls = ast.literal_eval(nats_urls)
 
 pg_url = os.getenv("pghost")
 pgdb = os.getenv("pgdb")
@@ -20,20 +18,13 @@ pgport = os.getenv("pgport")
 pguser = os.getenv("pguser")
 pgpassword = os.getenv("pgpassword")
 
-
-ack = False
-
-
-
 def fetch_db():
     try:
-        device_info = {}
-        
+        # Establish a connection to the PostgreSQL database
         connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
-        # connection = psycopg2.connect(host='216.48.182.5', database='postgres',port='5432',user='postgres',password='Happy@123')
-
+        # Create a cursor object
         cursor=connection.cursor()
-        
+                
         # query='''select dev.id,metadev.urn,metadev.ddns,metadev.ip,metadev.port,metadev."videoEncodingInformation",dev."remoteUsername",metadev.rtsp,dev."remoteDeviceSalt",feature."name",ge.latitude,ge.longitude
         #     from "Device" dev
         #     inner join "DeviceMetaData" metadev on dev."deviceId"= metadev."deviceId"
@@ -49,7 +40,7 @@ def fetch_db():
         #         INNER JOIN "Geo" ge ON ge."deviceMetaDataId" = metadev.id;
         #     ;'''
 
-        query =  '''SELECT dev.id, dev."tenantId", metadev.urn, metadev.ddns, metadev.ip, metadev.port, metadev."videoEncodingInformation", dev."remoteUsername", metadev.rtsp, dev."remoteDeviceSalt", ARRAY_AGG(feat."name") AS feature_names, ge.latitude, ge.longitude
+        query =  '''SELECT dev.id, dev."tenantId", metadev.urn, metadev.ddns, metadev.ip, CAST(metadev.port AS INTEGER), metadev."videoEncodingInformation", dev."remoteUsername", metadev.rtsp, dev."remoteDeviceSalt", ARRAY_AGG(feat."name") AS feature_names, ge.latitude, ge.longitude
                 FROM "Device" dev
                 INNER JOIN "DeviceMetaData" metadev ON dev."deviceId" = metadev."deviceId"
                 INNER JOIN "DeviceFeatures" devfeat ON dev."deviceId" = devfeat."deviceId" AND devfeat.enabled = True
@@ -59,6 +50,8 @@ def fetch_db():
             ;'''
             
         cursor.execute(query)
+        
+        connection.commit()
         
         print("Selecting rows from device table using cursor.fetchall")
         device_records = cursor.fetchall()
@@ -81,17 +74,16 @@ def fetch_db():
     
         # return(device_info)
             
-        # connection.commit()
-    
     except (Exception, psycopg2.Error) as error:
         print("Error while fetching data from PostgreSQL", error)
+        connection.rollback()  # rollback the transaction if an error occurs
         
-    # finally:
-    #     # closing database connection.
-    #     if connection:
-    #         cursor.close()
-    #         connection.close()
-    #         print("PostgreSQL connection is closed")
+    finally:
+        # closing database connection.
+        if connection:
+            cursor.close()
+            connection.close()
+            print("PostgreSQL connection is closed")
 
-# device_data = fetch_db()
+# device_data = fetch_db(cursor)
 # print(device_data)

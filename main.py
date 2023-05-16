@@ -15,19 +15,26 @@ import torch
 import multiprocessing
 from multiprocessing import Process, Queue, Pool
 import uuid
+import threading
+import cv2
+import psycopg2
+import time
 
 # importing required functions
 from db_fetch import fetch_db #to fetch data from postgres
 from yolo_slowfast.deep_sort.deep_sort import DeepSort # import Deepsort tracking model
 from anamoly_track import trackmain # model inference part
+from dev import device_details
+from db_push import gif_push, gst_hls_push
 
 Gst.init(None) # Initializes Gstreamer, it's variables, paths
 nc_client = NATS() # global Nats declaration
 
 # define constants and variables
 frame_skip = {}
+gif_batch = {}
 pipelines = []
-device_details = []
+# device_details = []
 known_whitelist_faces = []
 known_whitelist_id = []
 known_blacklist_faces = []
@@ -36,22 +43,34 @@ known_blacklist_id = []
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
+ipfs_url = os.getenv("ipfs")
 nats_urls = os.getenv("nats")
 nats_urls = ast.literal_eval(nats_urls)
+
+pg_url = os.getenv("pghost")
+pgdb = os.getenv("pgdb")
+pgport = os.getenv("pgport")
+pguser = os.getenv("pguser")
+pgpassword = os.getenv("pgpassword")
 
 # creation of directories for file storage
 hls_path = "./Hls_output"
 if os.path.exists(hls_path) is False:
     os.mkdir(hls_path)
     
+gif_path = "./Gif_output"
+if os.path.exists(gif_path) is False:
+    os.mkdir(gif_path)
+    
 obj_model = torch.hub.load('Detection', 'custom', path='./best_yolov5.pt', source='local',force_reload=True)
 
+# Establish a connection to the PostgreSQL database
+connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
+# Create a cursor object
+cursor=connection.cursor()
+        
 def activity_trackCall(source, device_id, device_timestamp, device_data, datainfo, track_obj):
-    # global only_vehicle_batch_cnt,veh_pub
-    # device_urn = device_data['urn']
-    # timestampp = device_timestamp
-    # lat = device_data['lat']
-    # long = device_data['long']
+
     queue1 = Queue()
     batchId = uuid.uuid4()
     
@@ -63,21 +82,28 @@ def activity_trackCall(source, device_id, device_timestamp, device_data, datainf
         queue1,
         datainfo,
         obj_model,
-        track_obj
+        track_obj,
+        cursor
         )
 
-def numpy_creation(img_arr, device_id, device_timestamp, device_info, track_obj, skip_dict):
+def numpy_creation(img_arr, device_id, device_timestamp, device_info, track_obj, skip_dict, gif_dict):
         
-        # print("DEVICE ID: ", device_id)
-        # print("DEVICE URN: ", device_info['urn'])
-        # print("DEVICE TIMESTAMP: ", device_timestamp)
+    # filename for gif
+    video_name_gif = gif_path + '/' + str(device_id)
+    if not os.path.exists(video_name_gif):
+        os.makedirs(video_name_gif, exist_ok=True)
         
-        # if(skip_dict[device_id] > 100):
-            
+    path = video_name_gif + '/' + 'camera.gif'
         
-        if skip_dict[device_id] % 4 == 0:
-            datainfo = [known_whitelist_faces, known_blacklist_faces, known_whitelist_id, known_blacklist_id]
-            activity_trackCall(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj)
+    if(skip_dict[device_id] < 30):
+        gif_dict[device_id].append(img_arr)
+    elif(skip_dict[device_id] == 31):
+        threading.Thread(target=gif_push,args=(connection, cursor, path, device_info, gif_dict[device_id]),).start()
+        
+    if skip_dict[device_id] % 4 == 0:
+        datainfo = [known_whitelist_faces, known_blacklist_faces, known_whitelist_id, known_blacklist_id]
+        # activity_trackCall(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj)
+        threading.Thread(target=activity_trackCall,args=(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj,)).start()
 
 class PipelineWatcher:
     def __init__(self, pipelines):
@@ -117,9 +143,9 @@ class PipelineWatcher:
             # pipeline.set_state(Gst.State.READY)
             # pipeline.set_state(Gst.State.PLAYING)
             # # self.loop.quit()
-        # elif t == Gst.MessageType.STATE_CHANGED:
-        #     old_state, new_state, pending_state = message.parse_state_changed()
-        #     print(f"State changed: {old_state} -> {new_state}")
+        elif t == Gst.MessageType.STATE_CHANGED:
+            old_state, new_state, pending_state = message.parse_state_changed()
+            print(f"State changed: {old_state} -> {new_state}")
         # elif t == Gst.MessageType.STREAM_START:
         #     print("Stream started")
         # elif t == Gst.MessageType.STREAM_STATUS:
@@ -140,7 +166,7 @@ class PipelineWatcher:
         pipeline.set_state(Gst.State.PLAYING)
         
     @staticmethod
-    def on_new_sample(appsink, deviceId, deviceInfo, trackObj, frameSkip): # to fetch frames from appsink
+    def on_new_sample(appsink, deviceId, deviceInfo, trackObj, frameSkip, gif_batch): # to fetch frames from appsink
         
         # print("Got a sample")
         sample = appsink.emit("pull-sample")
@@ -153,14 +179,22 @@ class PipelineWatcher:
             buffer=buffer.extract_dup(0, buffer.get_size()),
             dtype=np.uint8,
         )
+        # # filename for hls
+        # frame_name = './Frame_output' + '/' + str(deviceId)
+        # if not os.path.exists(frame_name):
+        #     os.makedirs(frame_name, exist_ok=True)
+        
+        # file_name = f'./{frame_name}/{frameSkip[deviceId]}.jpg'
+        # cv2.imwrite(file_name, nparray)
+        # print(nparray.shape)
         frameSkip[deviceId] += 1
-        # print("DEVICE ID: ", deviceId, "FRAME SKIP: ", frameSkip)
-        # print(f"Received frame with shape {nparray.shape}")
+        # # print("DEVICE ID: ", deviceId, "FRAME SKIP: ", frameSkip)
+        print(f"Received frame with shape {nparray.shape}")
         datetime_ist = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
-        numpy_creation(img_arr=nparray, device_id=deviceId, device_timestamp=datetime_ist , device_info=deviceInfo, track_obj=trackObj, skip_dict=frameSkip)
+        numpy_creation(img_arr=nparray, device_id=deviceId, device_timestamp=datetime_ist , device_info=deviceInfo, track_obj=trackObj, skip_dict=frameSkip, gif_dict=gif_batch)
         return Gst.FlowReturn.OK
 
-def gst_launcher(device_data, frame_skip):
+def gst_launcher(device_data, frame_skip, gif_batch):
     
     print("Entering Framewise and HLS Stream")
     
@@ -184,21 +218,23 @@ def gst_launcher(device_data, frame_skip):
     video_name_hls = hls_path + '/' + str(device_id)
     if not os.path.exists(video_name_hls):
         os.makedirs(video_name_hls, exist_ok=True)
-    # print(video_name_hls)
+    print(video_name_hls)
     
     if(ddns_name == None):
-        hostname = 'localhost'
+        hostname = 'hls.ckdr.co.in'
     else:
         hostname = ddns_name
     
     # retry=5 retry-delay=1000 tcpserversink 
-    
+        
     if((encode_type.lower()) == "h264"):
-        pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=true ! tee name=g_t_{device_id} ! queue name=g_q_{device_id} ! rtph264depay name=g_depay_{device_id} ! h264parse name=g_parse_{device_id} ! avdec_h264 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=200 g_t_{device_id}. ! queue name=h_q_{device_id} ! rtph264depay name=h_depay_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}'
+        # pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=True ! rtph264depay name=g_depay_{device_id} ! h264parse name=g_parse_{device_id} ! avdec_h264 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=200'
+        pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=true ! tee name=g_t_{device_id} ! queue name=g_q_{device_id} ! rtph264depay name=g_depay_{device_id} ! h264parse name=g_parse_{device_id} ! avdec_h264 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=1 g_t_{device_id}. ! queue name=h_q_{device_id} ! rtph264depay name=h_depay_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}'
     if((encode_type.lower()) == "h265"):
-        pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=true ! tee name=g_t_{device_id} ! queue name=g_q_{device_id} ! rtph265depay name=g_depay_{device_id} ! h265parse name=g_parse_{device_id} ! avdec_h265 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=200 g_t_{device_id}. ! queue name=h_q_{device_id} ! rtph265depay name=h_depay_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}'
-    if((encode_type.lower()) == "mp4"):
-        pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" latency=50 timeout=300 drop-on-latency=true tee name=g_t_{device_id} ! queue name=g_q_{device_id} ! decodebin name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=10 g_t_{device_id}. ! queue name=h_q_{device_id} ! x264enc name=h_enc_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}'
+        # pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=True ! rtph265depay name=g_depay_{device_id} ! h265parse name=g_parse_{device_id} ! avdec_h265 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=200'
+        pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=true ! tee name=g_t_{device_id} ! queue name=g_q_{device_id} ! rtph265depay name=g_depay_{device_id} ! h265parse name=g_parse_{device_id} ! avdec_h265 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=1 g_t_{device_id}. ! queue name=h_q_{device_id} ! rtph265depay name=h_depay_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}'    
+    # if((encode_type.lower()) == "mp4"):
+    #     pipeline_str = f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" latency=50 timeout=300 drop-on-latency=true tee name=g_t_{device_id} ! queue name=g_q_{device_id} ! decodebin name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} emit-signals=True max-buffers=10 g_t_{device_id}. ! queue name=h_q_{device_id} ! x264enc name=h_enc_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}'
     
     pipeline = Gst.parse_launch(pipeline_str)
     
@@ -226,7 +262,7 @@ def gst_launcher(device_data, frame_skip):
         
     pipeline.set_state(Gst.State.PLAYING)
     appsink = pipeline.get_by_name(f"g_sink_{device_id}")
-    appsink.connect("new-sample", PipelineWatcher.on_new_sample, device_id, device_data, track_obj, frame_skip)
+    appsink.connect("new-sample", PipelineWatcher.on_new_sample, device_id, device_data, track_obj, frame_skip, gif_batch)
     pipelines.append(pipeline)
     
 def run_pipeline(devices_for_process):
@@ -253,8 +289,9 @@ def run_pipeline(devices_for_process):
             'long': device_tuple[12]
         }
         frame_skip[device_dict['deviceId']] = 0
-        gst_launcher(device_dict, frame_skip)
-        
+        gif_batch[device_dict['deviceId']] = []
+        gst_launcher(device_dict, frame_skip, gif_batch)
+        # threading.Thread(target=gst_hls_push,args=(connection, cursor, device_dict),).start()
     GLib.MainLoop().run()
 
 def call_gstreamer(device_details): # iterate through the device list and start the gstreamer pipeline
@@ -266,18 +303,22 @@ def call_gstreamer(device_details): # iterate through the device list and start 
     for i in range(num_processes):
         start_index = i * devices_per_process
         end_index = min((i + 1) * devices_per_process, len(device_details))
+        print("--------------------------------------------------")
+        print(device_details[start_index:end_index])
+        print(len(device_details[start_index:end_index]))
+        print("--------------------------------------------------")
         devices_for_process = device_details[start_index:end_index]
         
         # Start a new process for this batch of devices
         process = multiprocessing.Process(target=run_pipeline, args=(devices_for_process,))
         process.start()
-
     
 async def main():
     global device_details
     # fetch device details
-    device_details = fetch_db()
+    # device_details = fetch_db()
     call_gstreamer(device_details)
+
 
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn', force=True)
@@ -291,3 +332,4 @@ if __name__ == '__main__':
     except RuntimeError as e:
         print("error ", e)
         print(torch.cuda.memory_summary(device=None, abbreviated=False), "cuda")
+   
