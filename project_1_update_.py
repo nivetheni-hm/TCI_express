@@ -73,7 +73,7 @@ def padding_img(path, frame):
     cv2.imwrite(path, frame)
     
 
-def output_func(my_list):
+def output_func(my_list,device_id):
     my_list = [d for d in my_list if d['detection_info'] is not None]
     my_list = [my_list]
     frames=[]               # this variable will hold the frame_id of all the frames in which a atleast one detection was made"
@@ -322,7 +322,7 @@ def output_func(my_list):
    
     primary = {
         "type": "activity",
-        "deviceid": "",
+        "deviceid": device_id,
         "batchid": "",
         "timestamp": "",
         "geo": {
@@ -331,17 +331,23 @@ def output_func(my_list):
         },
         "metaData": metaBatch
     }
+
     if primary["metaData"]['cid']:
         # convert full frame numpy to cid
-        pathh = "./"+primary['deviceid']+"/cid_ref_full.jpg"
+        if not os.path.exists("./ipfs_data"):
+            os.makedirs("./ipfs_data")
+        if not os.path.exists("./ipfs_data/"+primary['deviceid']):
+            os.makedirs("./ipfs_data/"+primary['deviceid'])
+        pathh = "./ipfs_data/"+primary['deviceid']+"/cid_ref_full.jpg"
+
         padding_img(pathh,primary["metaData"]['cid'][0])
         primary["metaData"]['cid'] = conv_path2cid(pathh)
 
         for each in primary["metaData"]["object"]:
-            pathh = "./"+primary['deviceid']+"/cid_ref.jpg"
+            
+            pathh = "./ipfs_data/"+primary['deviceid']+"/cid_ref.jpg"
             padding_img(pathh,each["cids"][0])
             each["cids"] = conv_path2cid(pathh)
-  
+
     return primary
 
-# print(output_func(my_list))
