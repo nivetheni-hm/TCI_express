@@ -88,6 +88,12 @@ def numpy_creation(img_arr, device_id, device_timestamp, device_info, track_obj,
         datainfo = [known_whitelist_faces, known_blacklist_faces, known_whitelist_id, known_blacklist_id]
         # activity_trackCall(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj)
         threading.Thread(target=activity_trackCall,args=(img_arr, device_id, device_timestamp, device_info, datainfo, track_obj,)).start()
+        
+def handle_eos(pipe_element, pipe_element_name):
+    elements = pipe_element.iterate_elements()
+    
+    for element in elements:
+        print(element)
 
 def gstreamer_bus_callback(bus, message):
     t = message.type
@@ -101,6 +107,12 @@ def gstreamer_bus_callback(bus, message):
         return
     elif t == Gst.MessageType.EOS:
         print("End-Of-Stream reached")
+        element = message.src
+        element_name = element.get_name()
+        print("The element is: ", element)
+        print("Error in element:", element_name)
+        # Handle the EOS message
+        handle_eos(element, element_name)
         return
     elif t == Gst.MessageType.STATE_CHANGED:
         old_state, new_state, pending_state = message.parse_state_changed()
@@ -137,11 +149,11 @@ def camera_process(camera_data, frameSkip, gifBatch):
             hostname = ddns_name
         
         if((encode_type.lower()) == "h264"):
-            pipeline_frm_str = Gst.parse_launch(f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=true ! rtph264depay name=g_depay_{device_id} ! h264parse name=g_parse_{device_id} ! avdec_h264 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} sync=false')
-            pipeline_hls_str = Gst.parse_launch(f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=true ! rtph264depay name=g_depay_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}')
+            pipeline_frm_str = Gst.parse_launch(f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=1600 retry=1600 drop-on-latency=true ! rtph264depay name=g_depay_{device_id} ! h264parse name=g_parse_{device_id} ! avdec_h264 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} sync=false')
+            pipeline_hls_str = Gst.parse_launch(f'rtspsrc name=h_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=1600 retry=1600 drop-on-latency=true ! rtph264depay name=h_depay_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}')
         if((encode_type.lower()) == "h265"):
-            pipeline_frm_str = Gst.parse_launch(f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=true ! rtph265depay name=g_depay_{device_id} ! h265parse name=g_parse_{device_id} ! avdec_h265 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} sync=false')
-            pipeline_hls_str = Gst.parse_launch(f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=300 drop-on-latency=true ! rtph265depay name=g_depay_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}')
+            pipeline_frm_str = Gst.parse_launch(f'rtspsrc name=g_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=1600 retry=1600 drop-on-latency=true ! rtph265depay name=g_depay_{device_id} ! h265parse name=g_parse_{device_id} ! avdec_h265 name=g_decode_{device_id} ! videoconvert name=g_videoconvert_{device_id} ! videoscale name=g_videoscale_{device_id} ! video/x-raw,format=BGR,width=1920,height=1080,pixel-aspect-ratio=1/1,bpp=24 ! appsink name=g_sink_{device_id} sync=false')
+            pipeline_hls_str = Gst.parse_launch(f'rtspsrc name=h_rtspsrc_{device_id} location={location} protocols="tcp" user-id={username} user-pw={password} latency=50 timeout=1600 retry=1600 drop-on-latency=true ! rtph265depay name=h_depay_{device_id} ! mpegtsmux name=h_mux_{device_id} ! hlssink name=h_sink_{device_id}')
         
         pipeline_frm.append({'pipeline': pipeline_frm_str, 'device_id': device_id, 'dev_data': data, 'track_obj': track_obj})
         pipeline_hls.append({'pipeline': pipeline_hls_str, 'device_id': device_id, 'ddns_name': hostname, 'file_path': video_name_hls})
@@ -174,7 +186,7 @@ def camera_process(camera_data, frameSkip, gifBatch):
             buffer=buffer.extract_dup(0, buffer.get_size()),
             dtype=np.uint8,
         )
-        # print(f"Received frame - Size: {width}x{height}")
+        print(f"Received frame - Size: {width}x{height}")
         frameSkip[device_Id] += 1
         datetime_ist = str(datetime.now(timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S.%f'))
         numpy_creation(img_arr=nparray, device_id=device_Id, device_timestamp=datetime_ist , device_info=device_Data, track_obj=track_Obj, skip_dict=frameSkip, gif_dict=gif_batch)
@@ -193,7 +205,7 @@ def camera_process(camera_data, frameSkip, gifBatch):
         video_name_hls = pipeline['file_path']
         sink = pipeline['pipeline'].get_by_name(f'h_sink_{deviceId}') # sink params
         sink.set_property('playlist-root', f'https://{hostname}/live/stream{deviceId}') # Location of the playlist to write
-        sink.set_property('playlist-location', f'{video_name_hls}/{device_id}.m3u8') # Location of the playlist to write
+        sink.set_property('playlist-location', f'{video_name_hls}/{deviceId}.m3u8') # Location of the playlist to write
         sink.set_property('location', f'{video_name_hls}/segment.%01d.ts') # Location of the file to write
         sink.set_property('target-duration', 10) # The target duration in seconds of a segment/file. (0 - disabled, useful for management of segment duration by the streaming server)
         sink.set_property('playlist-length', 3) # Length of HLS playlist. To allow players to conform to section 6.3.3 of the HLS specification, this should be at least 3. If set to 0, the playlist will be infinite.
@@ -241,7 +253,6 @@ def run_pipeline(devices_for_process):
         
     print(device_list)
     
-    # mp.Process(target=gst_hls_push, args=(device_list,)).start()
     threading.Thread(target=gst_hls_push,args=(device_list,)).start()
     camera_process(device_list, frame_skip, gif_batch)
 
@@ -250,8 +261,8 @@ if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn', force=True)
     
     # fetch device details
-    # device_det = fetch_db()
-    device_det = device_details
+    device_det = fetch_db()
+    # device_det = device_details
     
     # Split the camera data into chunks of 5 cameras
     camera_chunks = [device_det[i:i+5] for i in range(0, len(device_det), 5)]
