@@ -42,12 +42,17 @@ def gst_hls_push(deviceInfo):
             cursor=connection.cursor()     
             # Execute the update statement with the specified values
             cursor.execute(query, (hls_url, device_id))           
-            connection.commit()        
+            # Commit the changes and close the connection
+            connection.commit()
+            cursor.close()
+            connection.close()    
             print("Updated the uri column in device table")
         except psycopg2.errors.SerializationFailure as e:
             # If the transaction encounters a serialization failure, retry with exponential backoff
             print(f"Transaction serialization failure: {e}")
             connection.rollback()
+            cursor.close()
+            connection.close()
             max_retries = 5
             delay = 0.2
             retry_count = 0
@@ -55,25 +60,37 @@ def gst_hls_push(deviceInfo):
                 print(f"Retrying transaction after {delay} seconds...")
                 time.sleep(delay)
                 try:
+                    # Establish a connection to the PostgreSQL database
+                    connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
+                    # Create a cursor object
+                    cursor=connection.cursor()
                     # Execute the update statement with the specified values
                     cursor.execute(query, (hls_url, device_id))
                     connection.commit()
+                    cursor.close()
+                    connection.close() 
                     print("Transaction succeeded on retry")
                     return
                 except psycopg2.errors.SerializationFailure as e:
                     print(f"Transaction serialization failure: {e}")
                     connection.rollback()
+                    cursor.close()
+                    connection.close()
                     delay *= 2
                     retry_count += 1
                 except Exception as e:
                     print("Postges error occured: ", e)
                     connection.rollback()
+                    cursor.close()
+                    connection.close()
                     return
             print("Transaction failed after maximum retries")
         
         except Exception as e:
             print("Postges error occured: ", e)
             connection.rollback()
+            cursor.close()
+            connection.close()
             return
         time.sleep(15)
 
@@ -112,12 +129,17 @@ def gif_push(file_path, device_info, gifBatch):
         cursor=connection.cursor()       
         # Execute the update statement with the specified values
         cursor.execute(query, (img_name, img_timestamp, deviceId, img_name, img_timestamp, str(gif_cid), tenantId, None, None))           
-        connection.commit()        
+        # Commit the changes and close the connection
+        connection.commit()
+        cursor.close()
+        connection.close()       
         print("Updated the Thumnail column")
     except psycopg2.errors.SerializationFailure as e:
         # If the transaction encounters a serialization failure, retry with exponential backoff
         print(f"Transaction serialization failure: {e}")
         connection.rollback()
+        cursor.close()
+        connection.close()
         max_retries = 5
         delay = 0.2
         retry_count = 0
@@ -125,25 +147,36 @@ def gif_push(file_path, device_info, gifBatch):
             print(f"Retrying transaction after {delay} seconds...")
             time.sleep(delay)
             try:
+                # Establish a connection to the PostgreSQL database
+                connection = psycopg2.connect(host=pg_url, database=pgdb, port=pgport, user=pguser, password=pgpassword)
+                # Create a cursor object
+                cursor=connection.cursor()
                 # Execute the update statement with the specified values
                 cursor.execute(query, (img_name, img_timestamp, deviceId, img_name, img_timestamp, str(gif_cid), tenantId, None, None))
                 connection.commit()
+                cursor.close()
+                connection.close() 
                 print("Transaction succeeded on retry")
                 return
             except psycopg2.errors.SerializationFailure as e:
                 print(f"Transaction serialization failure: {e}")
                 connection.rollback()
+                cursor.close()
+                connection.close()
                 delay *= 2
                 retry_count += 1
             except Exception as e:
                 print("Postges error occured: ", e)
                 connection.rollback()
+                cursor.close()
+                connection.close()
                 return
             print("Transaction failed after maximum retries")
         
     except Exception as e:
         print("Postges error occured: ", e)
         connection.rollback()
+        cursor.close()
+        connection.close()
         return
-    
     time.sleep(15)

@@ -38,7 +38,7 @@ from Detection.utils.plots import Annotator, colors, save_one_box
 from person_type_new import find_person_type
 from try_anamoly import anamoly_score_calculator, frame_weighted_avg
 from project_1_update_ import output_func
-from db_test import dbpush_activities
+from db_insert import dbpush_activities
 
 path = os.getcwd()
 
@@ -153,14 +153,10 @@ def face_recognition_process(output_json,datainfo,device_id):
         did, track_type = find_person_type(crop_image,datainfo)
         detection["track"] = track_type
         detection['memDID'] = did
-    dbpush_activities(output_json)
-
-
-
+    # dbpush_activities(output_json)
 
 def process_publish(device_id,batch_data,device_data,datainfo):
     # print(device_id," ",batch_data)
-    
     
     for i,each in enumerate(batch_data):
         # print("frame_id:",i+1)
@@ -196,16 +192,17 @@ def process_publish(device_id,batch_data,device_data,datainfo):
             output_json["type"] = "anamoly"
             
             print(output_json)
-            dbpush_activities(output_json)
-            asyncio.run(json_publish_activity(primary=output_json))
-            print("DB insert")
-            face_recognition_process(output_json,datainfo,device_id)
-            
-            
-            with open("test.json", "a") as outfile:
-                # data = json.load(outfile)
-                # data.append(output_json)
-                json.dump(output_json, outfile)
+            status = dbpush_activities(output_json)
+            if(status == "SUCCESS!!"):
+                asyncio.run(json_publish_activity(primary=output_json))
+                print("DB inserted successfully :)")
+                face_recognition_process(output_json,datainfo,device_id)
+                with open("test.json", "a") as outfile:
+                    # data = json.load(outfile)
+                    # data.append(output_json)
+                    json.dump(output_json, outfile)
+            elif(status == "FAILURE!!"):
+                print("DB insertion got failed :(")
         else:
             print("DB insert")
             print(output_json)
